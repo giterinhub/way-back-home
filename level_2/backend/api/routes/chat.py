@@ -33,12 +33,18 @@ if use_memory_bank and agent_engine_id:
 else:
     print("INFO: Initializing InMemory Services")
     
-    # TODO: REPLACE_INMEMORY_SERVICES
+    session_service = InMemorySessionService()
+    memory_service = InMemoryMemoryService()
     
 
 # Initialize Runner
 # For sub-agents using memory bank, we must ensure memory service is passed to the runner
-# TODO: REPLACE_RUNNER
+runner = Runner(
+    agent=root_agent, 
+    session_service=session_service,
+    memory_service=memory_service,
+    app_name="survivor-network"
+)
 
 
 # Global session map to persist mapping between client conversation_ids and ADK session_ids

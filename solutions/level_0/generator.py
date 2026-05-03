@@ -88,7 +88,7 @@ The white background is essential - the avatar will be composited onto a map."""
             # Found the image! Convert from bytes to PIL Image and save.
             image_bytes = part.inline_data.data
             portrait_image = Image.open(io.BytesIO(image_bytes))
-            portrait_image.save("outputs/portrait.png")
+            portrait_image.save("~/way-back-home/level_0/outputs/portrait.png")
             break
 
     if portrait_image is None:
@@ -121,7 +121,7 @@ This icon must be immediately recognizable as the same character from the portra
         if part.inline_data is not None:
             image_bytes = part.inline_data.data
             icon_image = Image.open(io.BytesIO(image_bytes))
-            icon_image.save("outputs/icon.png")
+            icon_image.save("~/way-back-home/level_0/outputs/icon.png")
             break
 
     if icon_image is None:
@@ -130,8 +130,8 @@ This icon must be immediately recognizable as the same character from the portra
     print("✓ Icon generated!")
 
     return {
-        "portrait_path": "outputs/portrait.png",
-        "icon_path": "outputs/icon.png"
+        "portrait_path": "~/way-back-home/level_0/outputs/portrait.png",
+        "icon_path": "~/way-back-home/level_0/outputs/icon.png"
     }
 
 

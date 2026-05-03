@@ -1,5 +1,5 @@
 {
-    "api_base_url": "https://api.waybackhome.dev",
-    "map_base_url": "https://waybackhome.dev",
-    "default_event_code": "sandbox"
+    "api_base_url": "https://api.erinl.space",
+    "map_base_url": "https://erinl.space",
+    "default_event_code": "gdg"
 }
