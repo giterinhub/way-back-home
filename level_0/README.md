@@ -98,7 +98,7 @@ The secret to generating consistent characters is using a **chat session**:
 ```python
 # Create chat session
 chat = client.chats.create(
-    model="gemini-2.5-flash-image",
+    model="gemini-3.1-flash-image-preview",
     config=types.GenerateContentConfig(
         response_modalities=["TEXT", "IMAGE"]
     )

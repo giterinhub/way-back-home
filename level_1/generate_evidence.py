@@ -23,6 +23,21 @@ from google.genai import types
 # CONFIGURATION
 # =============================================================================
 
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+
 CONFIG_PATH = "../config.json"
 OUTPUTS_DIR = "outputs"
 
@@ -461,8 +476,9 @@ def generate_images(biome: str) -> dict:
     prompts = BIOME_EVIDENCE[biome]
 
     # Create chat session for style consistency
+    model_name = get_model_name("image", "gemini-3.1-flash-image-preview")
     chat = client.chats.create(
-        model="gemini-2.5-flash-image",
+        model=model_name,
         config=types.GenerateContentConfig(
             response_modalities=["TEXT", "IMAGE"]
         )
