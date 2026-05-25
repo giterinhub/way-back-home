@@ -32,9 +32,24 @@ from agent.tools.star_tools import (
 bigquery_toolset = get_bigquery_mcp_toolset()
 
 
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+
 astronomical_analyst = Agent(
     name="AstronomicalAnalyst",
-    model="gemini-2.5-flash",
+    model=get_model_name("flash", "gemini-3.5-flash"),
     description="Analyzes star field images and queries the star catalog via Google Cloud MCP server for BigQuery to triangulate position.",
     instruction="""You are an astronomical specialist analyzing alien night skies.
 

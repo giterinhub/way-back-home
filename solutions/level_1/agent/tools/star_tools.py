@@ -32,6 +32,22 @@ import google.auth.transport.requests
 logger = logging.getLogger(__name__)
 
 
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+
+
 # =============================================================================
 # CONFIGURATION - Environment variables only
 # =============================================================================
@@ -224,13 +240,15 @@ def extract_star_features(image_url: str) -> dict:
             from PIL import Image
             img = Image.open(local_path)
             
+            model_name = get_model_name("flash", "gemini-3.5-flash")
             response = genai_client.models.generate_content(
-                model="gemini-2.5-flash",
+                model=model_name,
                 contents=[STAR_EXTRACTION_PROMPT, img]
             )
         else:
+            model_name = get_model_name("flash", "gemini-3.5-flash")
             response = genai_client.models.generate_content(
-                model="gemini-2.5-flash",
+                model=model_name,
                 contents=[
                     STAR_EXTRACTION_PROMPT,
                     genai_types.Part.from_uri(file_uri=image_url, mime_type="image/png")

@@ -27,6 +27,22 @@ async def add_session_to_memory(
 from agent.multimedia_agent import multimedia_agent
 from agent.tools.survivor_tools import get_survivors_with_skill, get_all_survivors, get_urgent_needs
 
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+
 # NEW: Hybrid search tools
 from agent.tools.hybrid_search_tools import (
     hybrid_search,
@@ -144,7 +160,7 @@ if USE_MEMORY_BANK:
     agent_tools.append(PreloadMemoryTool())
 
 root_agent = Agent(
-    model="gemini-2.5-flash",
+    model=get_model_name("flash", "gemini-3.5-flash"),
     name="survivor_network_agent",
     instruction=agent_instruction,
     tools=agent_tools,

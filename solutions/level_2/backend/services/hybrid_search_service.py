@@ -19,6 +19,22 @@ from enum import Enum
 import json
 
 
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+
+
 class SearchMethod(Enum):
     """Which search method to use"""
     KEYWORD = "keyword"      # AI-interpreted keyword search
@@ -115,9 +131,10 @@ class HybridSearchService:
         import urllib.request
         import json
         
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key={api_key}"
+        model_name = get_model_name("embedding", "text-embedding-004")
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:embedContent?key={api_key}"
         data = {
-            "model": "models/text-embedding-004",
+            "model": f"models/{model_name}",
             "content": {
                 "parts": [{"text": text}]
             }
@@ -739,7 +756,8 @@ Analyze the query:"""
         import urllib.request
         import json
         
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        model_name = get_model_name("flash", "gemini-3.5-flash")
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
         data = {
             "contents": [{
                 "parts": [{"text": prompt}]

@@ -137,7 +137,7 @@ python backend/main.py
 ```mermaid
 graph TD
     A[init.sh] --> B[Skip GCP Service accounts]
-    B --> C[WebSocket server connects to gemini-2.0-flash-exp]
+    B --> C[WebSocket server connects to gemini-3.5-flash]
     C --> D[Cracked drone firewall in real-time webcam]
 ```
 
@@ -152,7 +152,7 @@ chmod +x scripts/init.sh
 ```bash
 python backend/app/main.py
 ```
-💥 **Result**: Open the biometric override UI. Give it access to your camera and microphone. Speak or wave at the drone sensor—our server automatically binds to AI Studio's public `gemini-2.0-flash-exp` live model, letting you solve biometric challenges with ultra-low `<100ms` webcam response times!
+💥 **Result**: Open the biometric override UI. Give it access to your camera and microphone. Speak or wave at the drone sensor—our server automatically binds to AI Studio's public `gemini-3.5-flash` live model, letting you solve biometric challenges with ultra-low `<100ms` webcam response times!
 
 ---
 
@@ -200,7 +200,7 @@ chmod +x scripts/init.sh
 ./scripts/init.sh
 python satellite/main.py
 ```
-💥 **Result**: Zero Apache Kafka installations needed. The satellite controller intercepts message failures and pushes formation requirements directly to `gemini-2.5-flash` using standard HTTP POST requests. Drone coordinates are calculated and returned in **<0.5 seconds**, painting a gorgeous, animated 3D flight array around your map beacon!
+💥 **Result**: Zero Apache Kafka installations needed. The satellite controller intercepts message failures and pushes formation requirements directly to `gemini-3.5-flash` using standard HTTP POST requests. Drone coordinates are calculated and returned in **<0.5 seconds**, painting a gorgeous, animated 3D flight array around your map beacon!
 
 ---
 

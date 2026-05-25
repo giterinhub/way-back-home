@@ -26,10 +26,24 @@ USERNAME = config["username"]
 SUIT_COLOR = config["suit_color"]
 APPEARANCE = config["appearance"]
 
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
 # Initialize the Gemini client (auto-detect AI Studio API key or Vertex AI)
 if os.environ.get("GEMINI_API_KEY"):
     client = genai.Client() # Uses the key from environment
-    image_model = "imagen-3.0-generate-002"
+    image_model = get_model_name("image", "imagen-3.0-generate-002")
     is_vertex = False
 else:
     client = genai.Client(
@@ -57,7 +71,7 @@ def generate_explorer_avatar() -> dict:
     # Create a chat session to maintain character consistency across generations.
     # The chat session preserves context between turns, so Gemini "remembers"
     # what it generated and can create consistent variations.
-    if not is_vertex:
+    if not is_vertex and image_model.startswith("imagen-"):
         # Create a mock chat class to handle image generation via AI Studio's Imagen API
         # while keeping the multi-turn code completely identical.
         class AIStudioImageChat:

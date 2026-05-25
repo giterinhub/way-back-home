@@ -28,6 +28,22 @@ logger.setLevel(logging.INFO)
 
 from dispatch_agent.agent import root_agent
 
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+
 # Suppress noisy loggers
 logging.getLogger("websockets").setLevel(logging.WARNING)
 logging.getLogger("google_adk").setLevel(logging.WARNING)
@@ -90,7 +106,7 @@ async def websocket_endpoint(
     logger.info(f"WebSocket connected: {user_id}/{session_id}")
 
     if os.environ.get("GEMINI_API_KEY"):
-        root_agent.model = "gemini-2.0-flash-exp"
+        root_agent.model = get_model_name("live", "gemini-3.5-flash")
 
     # ========================================
     # Phase 2: Session Initialization (once per streaming session)

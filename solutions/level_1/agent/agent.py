@@ -38,6 +38,22 @@ from agent.tools.confirm_tools import confirm_location_tool
 logger = logging.getLogger(__name__)
 
 
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+
+
 # =============================================================================
 # BEFORE AGENT CALLBACK - Fetches config and sets state
 # =============================================================================
@@ -159,7 +175,7 @@ evidence_analysis_crew = ParallelAgent(
 
 root_agent = Agent(
     name="MissionAnalysisAI",
-    model="gemini-2.5-flash",
+    model=get_model_name("flash", "gemini-3.5-flash"),
     description="Coordinates crash site analysis to confirm explorer location and activate rescue beacon.",
     instruction="""You are the Mission Analysis AI coordinating a rescue operation for a stranded space explorer.
 

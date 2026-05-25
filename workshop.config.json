@@ -1,5 +1,11 @@
 {
     "api_base_url": "https://api.erinl.space",
     "map_base_url": "https://erinl.space",
-    "default_event_code": "gdg"
+    "default_event_code": "gdg",
+    "models": {
+        "flash": "gemini-3.5-flash",
+        "live": "gemini-3.5-flash",
+        "image": "gemini-3.1-flash-image-preview",
+        "embedding": "text-embedding-004"
+    }
 }

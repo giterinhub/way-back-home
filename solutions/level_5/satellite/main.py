@@ -18,6 +18,22 @@ from pydantic import BaseModel
 from a2a.client.transports.kafka import KafkaClientTransport
 from a2a.client.middleware import ClientCallContext
 from a2a.types import (
+
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
     AgentCard,
     AgentCapabilities,
     MessageSendParams,
@@ -193,7 +209,7 @@ async def get_formation_direct_from_gemini(formation_name: str) -> str:
         from google.genai import Client
         from google.genai import types as genai_types
         client = Client()
-        model_name = "gemini-2.5-flash"
+        model_name = get_model_name("flash", "gemini-3.5-flash")
         response = await client.aio.models.generate_content(
             model=model_name,
             contents=f"Create a {formation_name} formation",

@@ -2,6 +2,22 @@ from google.adk.agents.llm_agent import Agent
 import os
 import redis
 
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+
 REDIS_IP = os.environ.get('REDIS_HOST', 'localhost')
 
 # In-memory mock data to enable 100% offline, Docker-free execution
@@ -51,7 +67,7 @@ def lookup_schematic_tool(drive_name: str) -> list[str]:
 
 
 root_agent = Agent(
-    model='gemini-2.5-flash',
+    model=get_model_name("flash", "gemini-3.5-flash"),
     name='root_agent',
     description='A helpful assistant for user questions.',
     instruction='''SYSTEM ROLE: Database API.

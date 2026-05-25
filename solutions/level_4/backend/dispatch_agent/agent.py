@@ -25,6 +25,22 @@ load_dotenv()
 
 from .hazard_db import PART_HAZARDS
 
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+
 # Use insecure client to bypass SSL errors for debugging Cloud Run connection
 insecure_client = httpx.AsyncClient(verify=False)
 ARCHITECT_URL = os.environ.get("ARCHITECT_URL","http://localhost:8081")
@@ -162,7 +178,7 @@ async def monitor_for_hazard(
       # Call the model to generate content based on the provided image and prompt
       try:
           response = await client.aio.models.generate_content(
-              model="gemini-2.5-flash",
+              model=get_model_name("flash", "gemini-3.5-flash"),
               contents=contents,
               config=genai_types.GenerateContentConfig(
                   system_instruction=(
@@ -212,7 +228,7 @@ async def monitor_for_hazard(
 
 MODEL_ID = os.getenv("MODEL_ID", "gemini-live-2.5-flash-native-audio")
 if os.getenv("GEMINI_API_KEY"):
-    MODEL_ID = "gemini-2.0-flash-exp"
+    MODEL_ID = get_model_name("live", "gemini-3.5-flash")
 
 root_agent = Agent(
     name="dispatch_agent",

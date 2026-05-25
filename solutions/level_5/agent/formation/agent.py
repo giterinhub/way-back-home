@@ -1,9 +1,25 @@
 import os
 from google.adk.agents import Agent
 
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+
 root_agent = Agent(
     name="formation_agent",
-    model="gemini-2.5-flash",
+    model=get_model_name("flash", "gemini-3.5-flash"),
     instruction="""
     You are the **Formation Controller AI**.
     Your strict objective is to calculate X,Y coordinates for a fleet of **15 Drones** based on a requested geometric shape.
