@@ -46,47 +46,52 @@ echo -e "${CYAN}🚀 Welcome to Way Back Home!${NC}"
 echo ""
 
 # =============================================================================
-# Step 0: Check Google Cloud Authentication
+# Step 0: Check Google Cloud Authentication / AI Studio Mode
 # =============================================================================
-echo "Checking Google Cloud authentication..."
+if [ -n "$GEMINI_API_KEY" ]; then
+    echo -e "${GREEN}✓ GEMINI_API_KEY detected. Running in AI Studio Mode (Bypassing Google Cloud login)${NC}"
+    PROJECT_ID="ai-studio-mode"
+else
+    echo "Checking Google Cloud authentication..."
 
-if ! gcloud auth print-access-token > /dev/null 2>&1; then
-    echo -e "${RED}Error: Not authenticated with Google Cloud.${NC}"
-    echo "Please run: gcloud auth login"
-    exit 1
+    if ! gcloud auth print-access-token > /dev/null 2>&1; then
+        echo -e "${RED}Error: Not authenticated with Google Cloud.${NC}"
+        echo "Please run: gcloud auth login"
+        exit 1
+    fi
+
+    echo -e "${GREEN}✓ Authenticated${NC}"
+
+    # =============================================================================
+    # Step 1: Detect Google Cloud Project
+    # =============================================================================
+    echo "Detecting Google Cloud project..."
+
+    PROJECT_ID=$(gcloud config get-value project 2>/dev/null)
+
+    if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" == "(unset)" ]; then
+        echo -e "${RED}Error: No Google Cloud project configured.${NC}"
+        echo "Please run: gcloud config set project YOUR_PROJECT_ID"
+        exit 1
+    fi
+
+    echo -e "Using project: ${CYAN}${PROJECT_ID}${NC}"
+
+    # =============================================================================
+    # Step 3: Enable Required APIs
+    # =============================================================================
+    echo ""
+    echo -e "${YELLOW}Enabling required APIs...${NC}"
+
+    # Enable Vertex AI API (required for Level 0)
+    gcloud services enable aiplatform.googleapis.com --quiet 2>/dev/null || {
+        echo -e "${RED}Failed to enable Vertex AI API.${NC}"
+        echo "This may be a billing or permissions issue."
+        exit 1
+    }
+
+    echo -e "${GREEN}✓ Vertex AI API enabled${NC}"
 fi
-
-echo -e "${GREEN}✓ Authenticated${NC}"
-
-# =============================================================================
-# Step 1: Detect Google Cloud Project
-# =============================================================================
-echo "Detecting Google Cloud project..."
-
-PROJECT_ID=$(gcloud config get-value project 2>/dev/null)
-
-if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" == "(unset)" ]; then
-    echo -e "${RED}Error: No Google Cloud project configured.${NC}"
-    echo "Please run: gcloud config set project YOUR_PROJECT_ID"
-    exit 1
-fi
-
-echo -e "Using project: ${CYAN}${PROJECT_ID}${NC}"
-
-# =============================================================================
-# Step 3: Enable Required APIs
-# =============================================================================
-echo ""
-echo -e "${YELLOW}Enabling required APIs...${NC}"
-
-# Enable Vertex AI API (required for Level 0)
-gcloud services enable aiplatform.googleapis.com --quiet 2>/dev/null || {
-    echo -e "${RED}Failed to enable Vertex AI API.${NC}"
-    echo "This may be a billing or permissions issue."
-    exit 1
-}
-
-echo -e "${GREEN}✓ Vertex AI API enabled${NC}"
 
 # =============================================================================
 # Step 4: Get event code
