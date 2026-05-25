@@ -3,7 +3,7 @@
 Hybrid Search Service combining AI-Interpreted Keywords + RAG Semantic Search.
 
 Uses your existing Spanner setup with:
-- TextEmbeddings model (text-embedding-004)
+- TextEmbeddings model (gemini-embedding-2)
 - GeminiPro model (gemini-2.5-pro)
 - skill_embedding column in Skills table
 """
@@ -115,9 +115,9 @@ class HybridSearchService:
         import urllib.request
         import json
         
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent?key={api_key}"
         data = {
-            "model": "models/text-embedding-004",
+            "model": "models/gemini-embedding-2",
             "content": {
                 "parts": [{"text": text}]
             }
