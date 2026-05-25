@@ -26,12 +26,19 @@ USERNAME = config["username"]
 SUIT_COLOR = config["suit_color"]
 APPEARANCE = config["appearance"]
 
-# Initialize the Gemini client for Vertex AI
-client = genai.Client(
-    vertexai=True,
-    project=os.environ.get("GOOGLE_CLOUD_PROJECT", config.get("project_id")),
-    location="global"
-)
+# Initialize the Gemini client (auto-detect AI Studio API key or Vertex AI)
+if os.environ.get("GEMINI_API_KEY"):
+    client = genai.Client() # Uses the key from environment
+    image_model = "imagen-3.0-generate-002"
+    is_vertex = False
+else:
+    client = genai.Client(
+        vertexai=True,
+        project=os.environ.get("GOOGLE_CLOUD_PROJECT", config.get("project_id")),
+        location="global"
+    )
+    image_model = "gemini-2.5-flash-image"
+    is_vertex = True
 
 
 def generate_explorer_avatar() -> dict:
@@ -50,12 +57,57 @@ def generate_explorer_avatar() -> dict:
     # Create a chat session to maintain character consistency across generations.
     # The chat session preserves context between turns, so Gemini "remembers"
     # what it generated and can create consistent variations.
-    chat = client.chats.create(
-        model="gemini-2.5-flash-image",  # Nano Banana - Gemini with image generation
-        config=types.GenerateContentConfig(
-            response_modalities=["TEXT", "IMAGE"]
+    if not is_vertex:
+        # Create a mock chat class to handle image generation via AI Studio's Imagen API
+        # while keeping the multi-turn code completely identical.
+        class AIStudioImageChat:
+            def __init__(self, client, image_model):
+                self.client = client
+                self.image_model = image_model
+                self.history = []
+
+            def send_message(self, prompt_text: str):
+                print(f"Generating image via AI Studio {self.image_model}...")
+                response = self.client.models.generate_images(
+                    model=self.image_model,
+                    prompt=prompt_text,
+                    config=types.GenerateImagesConfig(
+                        number_of_images=1,
+                        aspect_ratio="1:1",
+                        output_mime_type="image/png"
+                    )
+                )
+                
+                class MockPart:
+                    def __init__(self, data):
+                        class MockInlineData:
+                            def __init__(self, d):
+                                self.data = d
+                        self.inline_data = MockInlineData(data)
+
+                class MockContent:
+                    def __init__(self, data):
+                        self.parts = [MockPart(data)]
+
+                class MockCandidate:
+                    def __init__(self, data):
+                        self.content = MockContent(data)
+
+                class MockResponse:
+                    def __init__(self, data):
+                        self.candidates = [MockCandidate(data)]
+
+                img_bytes = response.generated_images[0].image.image_bytes
+                return MockResponse(img_bytes)
+
+        chat = AIStudioImageChat(client, image_model)
+    else:
+        chat = client.chats.create(
+            model=image_model,
+            config=types.GenerateContentConfig(
+                response_modalities=["TEXT", "IMAGE"]
+            )
         )
-    )
 
     # MODULE_5_STEP_2_GENERATE_PORTRAIT
     # First turn: Generate the explorer portrait.

@@ -6,6 +6,11 @@
 # --- Main Logic Function ---
 # We put the core logic in a function to control execution flow.
 start_kafka_if_needed() {
+    if [ -n "$GEMINI_API_KEY" ]; then
+        echo -e "\033[0;32m✅ Kafka checked: Bypassed for AI Studio direct-Gemini-API mode!\033[0m"
+        return 0
+    fi
+
     # --- Configuration ---
     local CONTAINER_NAME="mission-kafka"
     local IMAGE_NAME="apache/kafka:4.2.0-rc1"

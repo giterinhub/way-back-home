@@ -38,15 +38,17 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
 
-if not PROJECT_ID:
-    logger.warning("[Star Tools] GOOGLE_CLOUD_PROJECT not set - BigQuery queries will fail")
-
-# Initialize Gemini client for star feature extraction
-genai_client = genai.Client(
-    vertexai=True,
-    project=PROJECT_ID or "placeholder",
-    location=os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
-)
+# Initialize the Gemini client (auto-detect AI Studio API key or Vertex AI)
+if os.environ.get("GEMINI_API_KEY"):
+    genai_client = genai.Client() # Uses the key from environment
+    is_vertex = False
+else:
+    genai_client = genai.Client(
+        vertexai=True,
+        project=PROJECT_ID or "placeholder",
+        location=os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
+    )
+    is_vertex = True
 
 logger.info(f"[Star Tools] Initialized for project: {PROJECT_ID}")
 
@@ -54,30 +56,66 @@ logger.info(f"[Star Tools] Initialized for project: {PROJECT_ID}")
 # =============================================================================
 # Google Cloud MCP server for BigQuery Connection
 # =============================================================================
-# This is the MANAGED MCP pattern - connecting to Google's BigQuery MCP server
-# instead of building our own or using the BigQuery Python SDK directly.
 
 BIGQUERY_MCP_URL = "https://bigquery.googleapis.com/mcp"
-
 _bigquery_toolset = None
 
 
 def get_bigquery_mcp_toolset():
     """
-    Get the MCPToolset connected to Google's BigQuery MCP server.
-
-    This uses OAuth 2.0 authentication with Application Default Credentials.
-    The toolset provides access to BigQuery's pre-built MCP tools like:
-    - execute_query: Run SQL queries
-    - list_datasets: List available datasets
-    - get_table_schema: Get table structure
-
-    Returns:
-        MCPToolset configured for BigQuery MCP
+    Get the BigQuery tool connection.
+    If in AI Studio mode, returns a local SQLite FunctionTool.
     """
     global _bigquery_toolset
 
     if _bigquery_toolset is not None:
+        return _bigquery_toolset
+
+    if os.environ.get("GEMINI_API_KEY"):
+        logger.info("[Star Tools] AI Studio Mode: Connecting to local SQLite Star Catalog...")
+        
+        def execute_query(query: str) -> str:
+            """
+            Execute a SQL query against the star catalog database.
+            
+            Args:
+                query: The SQL query string (e.g. SELECT * FROM star_catalog)
+                
+            Returns:
+                A JSON string containing the query results or error message.
+            """
+            import sqlite3
+            import re
+            
+            # Clean the query: BigQuery uses backticks and project names like:
+            # `project_id.way_back_home.star_catalog`
+            # We need to translate this to just `star_catalog` for SQLite!
+            cleaned_query = query
+            # Replace `project_id.way_back_home.star_catalog` or similar with `star_catalog`
+            cleaned_query = re.sub(r'`[^`.]+\.way_back_home\.star_catalog`', 'star_catalog', cleaned_query)
+            cleaned_query = re.sub(r'`star_catalog`', 'star_catalog', cleaned_query)
+            cleaned_query = re.sub(r'"[^".]+\.way_back_home\.star_catalog"', 'star_catalog', cleaned_query)
+            
+            # Locate db in the level_1 folder
+            db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "star_catalog.db")
+            
+            try:
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+                cursor.execute(cleaned_query)
+                columns = [d[0] for d in cursor.description]
+                results = []
+                for row in cursor.fetchall():
+                    results.append(dict(zip(columns, row)))
+                cursor.close()
+                conn.close()
+                return json.dumps(results)
+            except Exception as e:
+                return json.dumps({"error": f"SQLite error: {str(e)}", "query_run": cleaned_query})
+                
+        # Wrap as FunctionTool so the agent treats it identically
+        _bigquery_toolset = FunctionTool(execute_query)
+        logger.info("[Star Tools] Connected to local SQLite Star Catalog successfully")
         return _bigquery_toolset
 
     logger.info("[Star Tools] Connecting to Google Cloud MCP server for BigQuery...")
@@ -115,8 +153,6 @@ def get_bigquery_mcp_toolset():
 # =============================================================================
 # Local FunctionTool: Star Feature Extraction
 # =============================================================================
-# This is a LOCAL tool that calls Gemini directly - demonstrating that
-# you can mix local FunctionTools with MCP tools in the same agent.
 
 STAR_EXTRACTION_PROMPT = """Analyze this alien night sky image and extract stellar features.
 
@@ -169,25 +205,37 @@ def extract_star_features(image_url: str) -> dict:
     """
     Extract stellar features from a star field image using Gemini Vision.
 
-    This is a LOCAL tool that calls Gemini directly.
-    The agent will use this alongside the BigQuery MCP tools.
-
     Args:
-        image_url: Cloud Storage URL of the star field image (gs://...)
-
-    Returns:
-        dict with primary_star, nebula_type, stellar_color, description
+        image_url: Cloud Storage URL of the star field image (gs://...) or local path
     """
     logger.info(f"[Stars] Extracting features from: {image_url}")
 
     try:
-        response = genai_client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[
-                STAR_EXTRACTION_PROMPT,
-                genai_types.Part.from_uri(file_uri=image_url, mime_type="image/png")
-            ]
-        )
+        # If in AI Studio mode or we don't have GCS auth, read local file fallback
+        if not is_vertex or image_url.startswith("outputs/") or not image_url.startswith("gs://"):
+            local_path = image_url
+            if image_url.startswith("gs://"):
+                local_path = os.path.join("outputs", "star_field.png")
+                # Fallback check
+                if not os.path.exists(local_path):
+                    local_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "level_1", "outputs", "star_field.png")
+            
+            print(f"[Stars] Reading local file for analysis: {local_path}")
+            from PIL import Image
+            img = Image.open(local_path)
+            
+            response = genai_client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[STAR_EXTRACTION_PROMPT, img]
+            )
+        else:
+            response = genai_client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[
+                    STAR_EXTRACTION_PROMPT,
+                    genai_types.Part.from_uri(file_uri=image_url, mime_type="image/png")
+                ]
+            )
 
         result = _parse_json_response(response.text)
 

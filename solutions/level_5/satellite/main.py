@@ -137,57 +137,123 @@ async def message_stream(request: Request):
              
     return EventSourceResponse(event_generator())
 
+SYSTEM_INSTRUCTION = """
+You are the **Formation Controller AI**.
+Your strict objective is to calculate X,Y coordinates for a fleet of **15 Drones** based on a requested geometric shape.
+
+### FIELD SPECIFICATIONS
+- **Canvas Size**: 800px (width) x 600px (height).
+- **Safe Margin**: Keep pods at least 50px away from edges (x: 50-750, y: 50-550).
+- **Center Point**: x=400, y=300 (Use this as the origin for shapes).
+- **Top Menu Avoidance**: Do NOT place pods in the top 100px (y < 100) to avoid UI overlap.
+
+### FORMATION RULES
+When given a formation name, output coordinates for exactly 15 pods (IDs 0-14).
+1.  **CIRCLE**: Evenly spaced around a center point (R=200).
+2.  **STAR**: 5 points or a star-like distribution.
+3.  **X**: A large X crossing the screen.
+4.  **LINE**: A horizontal line across the middle.
+5.  **PARABOLA**: A U-shape opening UPWARDS. Center it at y=400, opening up to y=100. IMPORTANT: Lowest point must be at bottom (high Y value), opening up (low Y value). Screen coordinates have (0,0) at the TOP-LEFT. The vertex should be at the BOTTOM (e.g., y=500), with arms reaching up to y=200.
+6.  **RANDOM**: Scatter randomly within safe bounds.
+7.  **CUSTOM**: If the user inputs something else (e.g., "SMILEY", "TRIANGLE"), do your best to approximate it geometrically.
+
+### OUTPUT FORMAT
+You MUST output **ONLY VALID JSON**. No markdown fencing, no preamble, no commentary.
+Refuse to answer non-formation questions.
+
+**JSON Structure**:
+[
+    {"x": 400, "y": 300},
+    {"x": 420, "y": 300},
+    ... (15 total items)
+]
+"""
+
+async def get_formation_direct_from_gemini(formation_name: str) -> str:
+    """Fallback that calls Gemini directly via Google AI Studio API or Vertex AI."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if api_key:
+        import httpx
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "contents": [{"parts": [{"text": f"Create a {formation_name} formation"}]}],
+            "systemInstruction": {"parts": [{"text": SYSTEM_INSTRUCTION}]},
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "temperature": 0.1
+            }
+        }
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, json=payload, headers=headers, timeout=10.0)
+            resp.raise_for_status()
+            data = resp.json()
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+    else:
+        from google.genai import Client
+        from google.genai import types as genai_types
+        client = Client()
+        model_name = "gemini-2.5-flash"
+        response = await client.aio.models.generate_content(
+            model=model_name,
+            contents=f"Create a {formation_name} formation",
+            config=genai_types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION,
+                response_mime_type="application/json",
+                temperature=0.1
+            )
+        )
+        return response.text
+
 @app.post("/formation")
 async def set_formation(req: FormationRequest):
     global FORMATION, PODS
     FORMATION = req.formation
     logger.info(f"Received formation request: {FORMATION}")
     
-    if not kafka_transport:
-        logger.error("Kafka Transport is not initialized!")
-        return {"status": "error", "message": "Backend Not Connected"}
+    use_fallback = True
     
-    try:
-        # Construct A2A Message
-        prompt = f"Create a {FORMATION} formation"
-        logger.info(f"Sending A2A Message: '{prompt}'")
-        
-        from a2a.types import TextPart, Part, Role
-        import uuid
-        
-        msg_id = str(uuid.uuid4())
-        message_parts = [Part(TextPart(text=prompt))]
-        
-        msg_obj = Message(
-            message_id=msg_id,
-            role=Role.user,
-            parts=message_parts
-        )
-        
-        message_params = MessageSendParams(
-            message=msg_obj
-        )
-        
-        # Send and Wait for Response
-        ctx = ClientCallContext()
-        ctx.state["kafka_timeout"] = 120.0 # Timeout for GenAI latency
-        response = await kafka_transport.send_message(message_params, context=ctx)
-        
-        logger.info("Received A2A Response.")
-        
-        content = None
-        if isinstance(response, Message):
-            content = response.parts[0].root.text if response.parts else None
-        elif isinstance(response, Task):
-            if response.artifacts and response.artifacts[0].parts:
-                content = response.artifacts[0].parts[0].root.text
+    if kafka_transport:
+        try:
+            # Construct A2A Message
+            prompt = f"Create a {FORMATION} formation"
+            logger.info(f"Sending A2A Message via Kafka: '{prompt}'")
+            
+            from a2a.types import TextPart, Part, Role
+            import uuid
+            
+            msg_id = str(uuid.uuid4())
+            message_parts = [Part(TextPart(text=prompt))]
+            
+            msg_obj = Message(
+                message_id=msg_id,
+                role=Role.user,
+                parts=message_parts
+            )
+            
+            message_params = MessageSendParams(
+                message=msg_obj
+            )
+            
+            # Send and Wait for Response
+            ctx = ClientCallContext()
+            ctx.state["kafka_timeout"] = 10.0 # Bounded wait
+            response = await kafka_transport.send_message(message_params, context=ctx)
+            
+            logger.info("Received A2A Response from Kafka.")
+            
+            content = None
+            if isinstance(response, Message):
+                content = response.parts[0].root.text if response.parts else None
+            elif isinstance(response, Task):
+                if response.artifacts and response.artifacts[0].parts:
+                    content = response.artifacts[0].parts[0].root.text
 
-        if content:
-            logger.info(f"Response Content: {content[:100]}...")
-            try:
+            if content:
+                use_fallback = False
+                logger.info(f"Response Content: {content[:100]}...")
                 clean_content = content.replace("```json", "").replace("```", "").strip()
                 coords = json.loads(clean_content)
-                
                 if isinstance(coords, list):
                     logger.info(f"Parsed {len(coords)} coordinates.")
                     for i, pod_target in enumerate(coords):
@@ -195,16 +261,28 @@ async def set_formation(req: FormationRequest):
                             PODS[i]["x"] = pod_target["x"]
                             PODS[i]["y"] = pod_target["y"]
                     return {"status": "success", "formation": FORMATION}
-                else:
-                    logger.error("Response JSON is not a list.")
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse Agent JSON response: {e}")
-        else:
-            logger.error(f"Could not extract content from response type {type(response)}")
-
-    except Exception as e:
-        logger.error(f"Error calling agent via Kafka: {e}")
-        return {"status": "error", "message": str(e)}
+        except Exception as e:
+            logger.warning(f"Kafka transport error: {e}. Falling back to direct Gemini API...")
+            
+    if use_fallback:
+        logger.info("Using Direct Gemini API Fallback for formation generation...")
+        try:
+            content = await get_formation_direct_from_gemini(FORMATION)
+            logger.info(f"Fallback Direct Gemini Response Content: {content[:100]}...")
+            clean_content = content.replace("```json", "").replace("```", "").strip()
+            coords = json.loads(clean_content)
+            if isinstance(coords, list):
+                logger.info(f"Parsed {len(coords)} coordinates via fallback.")
+                for i, pod_target in enumerate(coords):
+                    if i < len(PODS):
+                        PODS[i]["x"] = pod_target["x"]
+                        PODS[i]["y"] = pod_target["y"]
+                return {"status": "success", "formation": FORMATION, "mode": "fallback"}
+            else:
+                logger.error("Fallback response is not a list.")
+        except Exception as ex:
+            logger.error(f"Fallback Direct Gemini call failed: {ex}")
+            return {"status": "error", "message": f"Direct Gemini Fallback failed: {ex}"}
 
 class PodUpdate(BaseModel):
     id: int

@@ -3,7 +3,34 @@ import os
 import redis
 
 REDIS_IP = os.environ.get('REDIS_HOST', 'localhost')
-r = redis.Redis(host=REDIS_IP, port=6379, decode_responses=True)
+
+# In-memory mock data to enable 100% offline, Docker-free execution
+MOCK_REDIS_DATA = {
+    "HYPERION-X": ["Warp Core", "Flux Pipe", "Ion Thruster"],
+    "NOVA-V": ["Ion Thruster", "Warp Core", "Flux Pipe"],
+    "OMEGA-9": ["Flux Pipe", "Ion Thruster", "Warp Core"],
+    "GEMINI-MK1": ["Coolant Tank", "Servo", "Fuel Cell"],
+    "APOLLO-13": ["Warp Core", "Coolant Tank", "Ion Thruster"],
+    "VORTEX-7": ["Quantum Cell", "Graviton Coil", "Plasma Injector"],
+    "CHRONOS-ALPHA": ["Shield Emitter", "Data Crystal", "Quantum Cell"],
+    "NEBULA-Z": ["Plasma Injector", "Flux Pipe", "Graviton Coil"],
+    "PULSAR-B": ["Data Crystal", "Servo", "Shield Emitter"],
+    "TITAN-PRIME": ["Ion Thruster", "Quantum Cell", "Warp Core"]
+}
+
+class MockRedis:
+    def lrange(self, key, start, end):
+        clean_key = str(key).strip().upper()
+        return MOCK_REDIS_DATA.get(clean_key, [])
+
+try:
+    r = redis.Redis(host=REDIS_IP, port=6379, decode_responses=True, socket_connect_timeout=1.0)
+    # Test connection
+    r.ping()
+    print("[ARCHITECT] Connected to real Redis server successfully.")
+except Exception as e:
+    print(f"[ARCHITECT] Redis server offline ({e}). Falling back to local MockRedis store.")
+    r = MockRedis()
 
 def lookup_schematic_tool(drive_name: str) -> list[str]:
     """Returns the ordered list of parts for a drive from local Redis."""

@@ -19,6 +19,44 @@ NC='\033[0m' # No Color
 
 echo -e "${BOLD}🚀 Verifying Mission Charlie (Level 5) Infrastructure...${NC}\n"
 
+if [ -n "$GEMINI_API_KEY" ]; then
+    echo -e "✅ Google Cloud Project: ${GREEN}Bypassed (AI Studio Mode)${NC}"
+    echo -e "✅ Cloud APIs: ${GREEN}Bypassed (AI Studio Mode)${NC}"
+    
+    # Check Python Dependencies
+    DEPS=(
+        "fastapi:fastapi"
+        "uvicorn:uvicorn"
+        "numpy:numpy"
+        "google-genai:google.genai"
+        "websockets:websockets"
+        "python-dotenv:dotenv"
+        "google-adk:google.adk"
+        "aiokafka:aiokafka"
+        "a2a-sdk:a2a"
+    )
+    MISSING_DEPS=()
+    for DEP in "${DEPS[@]}"; do
+        PKG_NAME="${DEP%%:*}"
+        IMPORT_NAME="${DEP##*:}"
+        if ! python3 -c "import $IMPORT_NAME" &>/dev/null && ! python -c "import $IMPORT_NAME" &>/dev/null && ! ../.venv/Scripts/python -c "import $IMPORT_NAME" &>/dev/null && ! .venv/Scripts/python -c "import $IMPORT_NAME" &>/dev/null && ! ../.venv/bin/python -c "import $IMPORT_NAME" &>/dev/null && ! .venv/bin/python -c "import $IMPORT_NAME" &>/dev/null && ! uv run python -c "import $IMPORT_NAME" &>/dev/null; then
+            MISSING_DEPS+=("$PKG_NAME")
+        fi
+    done
+    if [ ${#MISSING_DEPS[@]} -eq 0 ]; then
+        echo -e "✅ Python Environment: ${GREEN}Ready${NC}"
+        echo -e "\n-------------------------------------------------------"
+        echo -e "🎉 ${GREEN}${BOLD}SYSTEMS ONLINE. READY FOR MISSION (AI STUDIO MODE).${NC}"
+        exit 0
+    else
+        echo -e "❌ Python Dependencies: ${RED}Missing ${MISSING_DEPS[*]}${NC}"
+        echo "   Run: pip install -r requirements.txt"
+        echo -e "\n-------------------------------------------------------"
+        echo -e "🛑 ${RED}${BOLD}SYSTEM CHECKS FAILED.${NC} Please resolve the issues above."
+        exit 1
+    fi
+fi
+
 ALL_PASSED=true
 
 # ------------------------------------------------------------------------------

@@ -13,6 +13,12 @@
 
 # --- Colors for Output ---
 GREEN='\033[0;32m'
+
+if [ -n "$GEMINI_API_KEY" ]; then
+    echo -e "\033[0;32m✅ Redis checked: Bypassed for AI Studio local-mock mode!\033[0m"
+    exit 0
+fi
+
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 BOLD='\033[1m'

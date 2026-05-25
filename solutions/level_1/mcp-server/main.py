@@ -58,13 +58,18 @@ if not PROJECT_ID:
     logger.warning("GOOGLE_CLOUD_PROJECT not set - tools will fail")
 
 # Initialize Gemini client for multimodal analysis
-client = genai.Client(
-    vertexai=True,
-    project=PROJECT_ID,
-    location=LOCATION
-)
+if os.environ.get("GEMINI_API_KEY"):
+    client = genai.Client() # Uses the key from environment
+    is_vertex = False
+else:
+    client = genai.Client(
+        vertexai=True,
+        project=PROJECT_ID,
+        location=LOCATION
+    )
+    is_vertex = True
 
-logger.info(f"Initialized Gemini client for project: {PROJECT_ID}")
+logger.info(f"Initialized Gemini client (is_vertex={is_vertex}) for project: {PROJECT_ID}")
 
 
 # =============================================================================
@@ -167,13 +172,29 @@ def analyze_geological(
     logger.info(f">>> 🔬 Tool: 'analyze_geological' called for '{image_url}'")
     
     try:
-        # Call Gemini with the image
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[
+        # If in AI Studio mode or we don't have GCS auth, read local file fallback
+        if not is_vertex or image_url.startswith("outputs/") or not image_url.startswith("gs://"):
+            local_path = image_url
+            if image_url.startswith("gs://"):
+                local_path = os.path.join("outputs", "soil_sample.png")
+                # Fallback to level_1/outputs/soil_sample.png
+                if not os.path.exists(local_path):
+                    local_path = os.path.join(os.path.dirname(__file__), "..", "outputs", "soil_sample.png")
+            
+            logger.info(f"    [Local Fallback] Reading: {local_path}")
+            from PIL import Image
+            img = Image.open(local_path)
+            contents = [GEOLOGICAL_PROMPT, img]
+        else:
+            contents = [
                 GEOLOGICAL_PROMPT,
                 genai_types.Part.from_uri(file_uri=image_url, mime_type="image/png")
             ]
+
+        # Call Gemini with the image
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=contents
         )
         
         # Parse the JSON response
@@ -265,13 +286,29 @@ def analyze_botanical(
     logger.info(f">>> 🌿 Tool: 'analyze_botanical' called for '{video_url}'")
     
     try:
-        # Call Gemini with the video (processes both visual and audio)
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=[
+        # If in AI Studio mode or we don't have GCS auth, read local file fallback
+        if not is_vertex or video_url.startswith("outputs/") or not video_url.startswith("gs://"):
+            local_path = video_url
+            if video_url.startswith("gs://"):
+                local_path = os.path.join("outputs", "flora_recording.mp4")
+                # Fallback check
+                if not os.path.exists(local_path):
+                    local_path = os.path.join(os.path.dirname(__file__), "..", "outputs", "flora_recording.mp4")
+            
+            logger.info(f"    [Local Fallback] Reading video: {local_path}")
+            # Upload file for local analysis in AI Studio
+            uploaded_file = client.files.upload(file=local_path)
+            contents = [BOTANICAL_PROMPT, uploaded_file]
+        else:
+            contents = [
                 BOTANICAL_PROMPT,
                 genai_types.Part.from_uri(file_uri=video_url, mime_type="video/mp4")
             ]
+
+        # Call Gemini with the video (processes both visual and audio)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=contents
         )
         
         # Parse the JSON response

@@ -1,5 +1,26 @@
 #!/bin/bash
 
+if [ -n "$GEMINI_API_KEY" ]; then
+    echo "=== Google AI Studio Key Detected ==="
+    echo "Running in Free Offline / AI Studio mode."
+    PROJECT_FILE="$HOME/project_id.txt"
+    echo "ai-studio-mode" > "$PROJECT_FILE"
+    echo "Wrote 'ai-studio-mode' to $PROJECT_FILE"
+    
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    REPO_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
+    LEVEL_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
+    
+    if [ -f "$REPO_ROOT/config.json" ]; then
+        mkdir -p "$LEVEL_DIR/frontend/public" 2>/dev/null || true
+        cp "$REPO_ROOT/config.json" "$LEVEL_DIR/frontend/public/config.json" 2>/dev/null || true
+        echo "Copied config.json to $LEVEL_DIR/frontend/public/config.json"
+    fi
+    echo "Setup bypassed successfully!"
+    exit 0
+fi
+
+
 # --- Function for error handling ---
 handle_error() {
   echo -e "\n\n*******************************************************"

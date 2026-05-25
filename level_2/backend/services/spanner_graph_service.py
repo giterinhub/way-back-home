@@ -2,13 +2,17 @@ import uuid
 import logging
 from datetime import datetime
 from typing import Dict, Any, List, Optional
-from google.cloud import spanner
-from google.cloud.spanner_v1 import param_types
+import os
+from services.spanner_service import MockDatabase
+
+class param_types:
+    STRING = "STRING"
+    INT64 = "INT64"
+
 from extractors.base_extractor import (
     ExtractionResult, ExtractedEntity, ExtractedRelationship,
     EntityType, RelationshipType
 )
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -16,9 +20,8 @@ class SpannerGraphService:
     """Service to sync extracted data to Spanner Graph DB"""
     
     def __init__(self):
-        self.client = spanner.Client(project=os.getenv('PROJECT_ID'))
-        self.instance = self.client.instance(os.getenv('INSTANCE_ID'))
-        self.database = self.instance.database(os.getenv('DATABASE_ID'))
+        db_path = os.path.join(os.path.dirname(__file__), "..", "survivor_network.db")
+        self.database = MockDatabase(db_path)
         
         # Map EntityType to table info
         self.node_table_config = {

@@ -88,6 +88,9 @@ async def websocket_endpoint(
     await websocket.accept()
     logger.info(f"WebSocket connected: {user_id}/{session_id}")
 
+    if os.environ.get("GEMINI_API_KEY"):
+        root_agent.model = "gemini-2.0-flash-exp"
+
     #REPLACE_SESSION_INIT
     
     #REPLACE_LIVE_REQUEST

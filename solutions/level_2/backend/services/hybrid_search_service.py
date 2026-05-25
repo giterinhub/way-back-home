@@ -8,8 +8,11 @@ Uses your existing Spanner setup with:
 - skill_embedding column in Skills table
 """
 
-from google.cloud import spanner
-from google.cloud.spanner_v1 import param_types
+import os
+from services.spanner_service import MockDatabase
+class param_types:
+    STRING = "STRING"
+    INT64 = "INT64"
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -93,14 +96,59 @@ class HybridSearchService:
         database_id: str = "survivor-db"
     ):
         self.project_id = project_id
-        self.client = spanner.Client(project=project_id)
-        self.instance = self.client.instance(instance_id)
-        self.database = self.instance.database(database_id)
+        db_path = os.path.join(os.path.dirname(__file__), "..", "survivor_network.db")
+        self.database = MockDatabase(db_path)
         
         # Cache for known values
         self._known_skills: Optional[List[str]] = None
         self._known_categories: Optional[List[str]] = None
         self._known_biomes: Optional[List[str]] = None
+        
+        # In-memory cache for skill embeddings
+        self._skills_embeddings_cache = {}
+
+    def _get_embedding(self, text: str) -> List[float]:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY environment variable is not set")
+            
+        import urllib.request
+        import json
+        
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key={api_key}"
+        data = {
+            "model": "models/text-embedding-004",
+            "content": {
+                "parts": [{"text": text}]
+            }
+        }
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(data).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        try:
+            with urllib.request.urlopen(req) as response:
+                res = json.loads(response.read().decode("utf-8"))
+                return res["embedding"]["values"]
+        except Exception as e:
+            print(f"Error calling Embedding API for '{text}': {e}")
+            # Return a dummy vector of 768 dimensions
+            return [0.0] * 768
+
+    def _get_skill_embedding(self, skill_name: str) -> List[float]:
+        if skill_name not in self._skills_embeddings_cache:
+            self._skills_embeddings_cache[skill_name] = self._get_embedding(skill_name)
+        return self._skills_embeddings_cache[skill_name]
+
+    def _cosine_similarity(self, v1: List[float], v2: List[float]) -> float:
+        dot_product = sum(x * y for x, y in zip(v1, v2))
+        norm1 = sum(x * x for x in v1) ** 0.5
+        norm2 = sum(x * x for x in v2) ** 0.5
+        if norm1 == 0 or norm2 == 0:
+            return 0.0
+        return dot_product / (norm1 * norm2)
     
     # =========================================================================
     # QUERY ANALYSIS - Determine best search method
@@ -358,48 +406,35 @@ Analyze the query:"""
         
         results = []
         
-        # This is your working query from the successful run!
+        # Get embedding of user query
+        query_emb = self._get_embedding(query)
+        
+        # Query SQLite for survivor & skill relations
         sql = """
-            WITH query_embedding AS (
-                SELECT embeddings.values AS val
-                FROM ML.PREDICT(
-                    MODEL TextEmbeddings,
-                    (SELECT @query AS content)
-                )
-            )
             SELECT
                 s.survivor_id,
                 s.name AS survivor_name,
                 s.biome,
                 sk.skill_id,
                 sk.name AS skill_name,
-                sk.category,
-                COSINE_DISTANCE(
-                    sk.skill_embedding, 
-                    (SELECT val FROM query_embedding)
-                ) AS distance
+                sk.category
             FROM Survivors s
             JOIN SurvivorHasSkill shs ON s.survivor_id = shs.survivor_id
             JOIN Skills sk ON shs.skill_id = sk.skill_id
-            WHERE sk.skill_embedding IS NOT NULL
-            ORDER BY distance ASC
-            LIMIT @limit
         """
         
         def run_query(transaction):
-            rows = transaction.execute_sql(
-                sql,
-                params={"query": query, "limit": limit},
-                param_types={
-                    "query": param_types.STRING,
-                    "limit": param_types.INT64
-                }
-            )
+            rows = transaction.execute_sql(sql)
             
             # Group by survivor, keeping best skill match
             survivor_map = {}
             for row in rows:
-                surv_id, surv_name, biome, skill_id, skill_name, category, distance = row
+                surv_id, surv_name, biome, skill_id, skill_name, category = row
+                
+                # Fetch skill embedding from cache or API, then calculate similarity
+                skill_emb = self._get_skill_embedding(skill_name)
+                similarity = self._cosine_similarity(query_emb, skill_emb)
+                distance = 1.0 - similarity
                 
                 if surv_id not in survivor_map:
                     survivor_map[surv_id] = {
@@ -419,7 +454,7 @@ Analyze the query:"""
                     "id": skill_id,
                     "name": skill_name,
                     "category": category,
-                    "similarity": 1 - float(distance)  # Convert to similarity
+                    "similarity": similarity  # Convert to similarity
                 })
             
             # Convert to results
@@ -449,7 +484,7 @@ Analyze the query:"""
         # Sort by score (highest first)
         results.sort(key=lambda x: x.score, reverse=True)
         
-        return results
+        return results[:limit]
     
     # =========================================================================
     # HYBRID SEARCH - Combine Both Methods
@@ -626,55 +661,44 @@ Analyze the query:"""
         
         results = []
         
+        # Get target skill embedding
+        query_emb = self._get_embedding(skill_name)
+        
         sql = """
-            WITH query_embedding AS (
-                SELECT embeddings.values AS val
-                FROM ML.PREDICT(
-                    MODEL TextEmbeddings,
-                    (SELECT @skill_name AS content)
-                )
-            )
-            SELECT
-                sk.skill_id,
-                sk.name,
-                sk.category,
-                COSINE_DISTANCE(
-                    sk.skill_embedding,
-                    (SELECT val FROM query_embedding)
-                ) AS distance
+            SELECT sk.skill_id, sk.name, sk.category
             FROM Skills sk
-            WHERE sk.skill_embedding IS NOT NULL
-              AND LOWER(sk.name) != LOWER(@skill_name)
-            ORDER BY distance ASC
-            LIMIT @limit
+            WHERE LOWER(sk.name) != LOWER(:skill_name)
         """
         
         def run_query(transaction):
             rows = transaction.execute_sql(
                 sql,
-                params={
-                    "skill_name": skill_name,
-                    "limit": limit
-                },
-                param_types={
-                    "skill_name": param_types.STRING,
-                    "limit": param_types.INT64
-                }
+                params={"skill_name": skill_name},
+                param_types={"skill_name": param_types.STRING}
             )
             
             for row in rows:
-                skill_id, name, category, distance = row
+                skill_id, name, category = row
+                
+                # Fetch skill embedding from cache or API, then calculate similarity
+                skill_emb = self._get_skill_embedding(name)
+                similarity = self._cosine_similarity(query_emb, skill_emb)
+                distance = 1.0 - similarity
+                
                 results.append({
                     "skill_id": skill_id,
                     "name": name,
                     "category": category,
-                    "similarity": 1 - float(distance),
-                    "distance": float(distance)
+                    "similarity": similarity,
+                    "distance": distance
                 })
         
         self.database.run_in_transaction(run_query)
         
-        return results
+        # Sort by similarity descending
+        results.sort(key=lambda x: x["similarity"], reverse=True)
+        
+        return results[:limit]
     
     # =========================================================================
     # HELPER METHODS
@@ -707,27 +731,31 @@ Analyze the query:"""
         self.database.run_in_transaction(load)
     
     def _call_gemini(self, prompt: str) -> str:
-        """Call Gemini model via Spanner ML.PREDICT."""
-        result = None
+        """Call Gemini model via direct Google AI Studio API."""
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY environment variable is not set")
         
-        sql = """
-            SELECT content
-            FROM ML.PREDICT(
-                MODEL GeminiPro,
-                (SELECT @prompt AS prompt)
-            )
-        """
+        import urllib.request
+        import json
         
-        def run_query(transaction):
-            nonlocal result
-            rows = transaction.execute_sql(
-                sql,
-                params={"prompt": prompt},
-                param_types={"prompt": param_types.STRING}
-            )
-            for row in rows:
-                result = row[0]
-        
-        self.database.run_in_transaction(run_query)
-        
-        return result or ""
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        data = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }]
+        }
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(data).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        try:
+            with urllib.request.urlopen(req) as response:
+                res = json.loads(response.read().decode("utf-8"))
+                text = res["candidates"][0]["content"]["parts"][0]["text"]
+                return text
+        except Exception as e:
+            print(f"Error calling Gemini API: {e}")
+            return ""
