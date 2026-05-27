@@ -109,7 +109,7 @@ async def websocket_endpoint(
     logger.info(f"WebSocket connected: {user_id}/{session_id}")
 
     if os.environ.get("GEMINI_API_KEY"):
-        root_agent.model = get_model_name("live", "gemini-3.5-flash")
+        root_agent.model = get_model_name("live", "gemini-3.1-flash-live-preview")
 
     # ========================================
     # Phase 2: Session Initialization (once per streaming session)
@@ -123,8 +123,8 @@ async def websocket_endpoint(
 
     model_name = root_agent.model
     if os.environ.get("GEMINI_API_KEY"):
-        root_agent.model = get_model_name("live", "gemini-3.5-flash")
-        model_name = get_model_name("live", "gemini-3.5-flash")
+        root_agent.model = get_model_name("live", "gemini-3.1-flash-live-preview")
+        model_name = get_model_name("live", "gemini-3.1-flash-live-preview")
 
     is_native_audio = "native-audio" in model_name.lower() or "live" in model_name.lower() or "exp" in model_name.lower()
 

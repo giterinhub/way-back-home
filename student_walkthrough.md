@@ -20,14 +20,14 @@ To begin your adventure as a student, ensure you have the following ready:
 
 ---
 
-## 🚀 Level 0: Establish Your Identity (Imagen Avatar Generation)
+## 🚀 Level 0: Establish Your Identity (Gemini 3.1 Flash Image Preview Avatar Generation)
 
-**Objective**: Reserve your explorer identity on the shared network and generate a consistent explorer portrait and map-marker icon using Gemini and Imagen.
+**Objective**: Reserve your explorer identity on the shared network and generate a consistent explorer portrait and map-marker icon using Gemini 3.1 Flash Image Preview (Nano Banana 2).
 
 ```mermaid
 graph TD
     A[scripts/student_sandbox.sh] --> B[Reserve Identity via setup.sh]
-    B --> C[Generate Portrait & Icon via Imagen-3]
+    B --> C[Generate Portrait & Icon via Gemini 3.1 Flash Image Preview]
     C --> D[Render Avatar on Map at erinl.space]
 ```
 
@@ -56,7 +56,7 @@ source ../.venv/bin/activate  # Ensure venv is active
 pip install -r requirements.txt
 python generator.py
 ```
-💥 **Result**: Imagen-3 on AI Studio will generate your high-res avatar and icon in `<10 seconds` for free! Open the shared map URL at [https://erinl.space](https://erinl.space) and search for your username to see yourself appearing in real-time!
+💥 **Result**: Gemini 3.1 Flash Image Preview (Nano Banana 2) on AI Studio will generate your high-res avatar and icon in `<10 seconds` for free! Open the shared map URL at [https://erinl.space](https://erinl.space) and search for your username to see yourself appearing in real-time!
 
 ---
 
@@ -137,7 +137,7 @@ python backend/main.py
 ```mermaid
 graph TD
     A[init.sh] --> B[Skip GCP Service accounts]
-    B --> C[WebSocket server connects to gemini-3.5-flash]
+    B --> C[WebSocket server connects to gemini-3.1-flash-live-preview]
     C --> D[Cracked drone firewall in real-time webcam]
 ```
 
@@ -152,7 +152,7 @@ chmod +x scripts/init.sh
 ```bash
 python backend/app/main.py
 ```
-💥 **Result**: Open the biometric override UI. Give it access to your camera and microphone. Speak or wave at the drone sensor—our server automatically binds to AI Studio's public `gemini-3.5-flash` live model, letting you solve biometric challenges with ultra-low `<100ms` webcam response times!
+💥 **Result**: Open the biometric override UI. Give it access to your camera and microphone. Speak or wave at the drone sensor—our server automatically binds to AI Studio's public `gemini-3.1-flash-live-preview` model, letting you solve biometric challenges with ultra-low `<100ms` webcam response times!
 
 ---
 
@@ -200,7 +200,7 @@ chmod +x scripts/init.sh
 ./scripts/init.sh
 python satellite/main.py
 ```
-💥 **Result**: Zero Apache Kafka installations needed. The satellite controller intercepts message failures and pushes formation requirements directly to `gemini-3.5-flash` using standard HTTP POST requests. Drone coordinates are calculated and returned in **<0.5 seconds**, painting a gorgeous, animated 3D flight array around your map beacon!
+💥 **Result**: Zero Apache Kafka installations needed. The satellite controller intercepts message failures and pushes formation requirements directly to `gemini-3.5-flash-preview` using standard HTTP POST requests. Drone coordinates are calculated and returned in **<0.5 seconds**, painting a gorgeous, animated 3D flight array around your map beacon!
 
 ---
 

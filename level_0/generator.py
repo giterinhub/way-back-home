@@ -55,7 +55,7 @@ def get_model_name(model_key: str, default: str) -> str:
 # Initialize the Gemini client (auto-detect AI Studio API key or Vertex AI)
 if os.environ.get("GEMINI_API_KEY"):
     client = genai.Client() # Uses the key from environment
-    image_model = get_model_name("image", "imagen-3.0-generate-002")
+    image_model = get_model_name("image", "gemini-3.1-flash-image-preview")
     is_vertex = False
 else:
     client = genai.Client(

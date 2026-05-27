@@ -12,7 +12,7 @@ Your escape pod has crash-landed on an unknown world. The rescue network can't l
 |---------|-------------|
 | **Multi-turn Image Generation** | Maintain character consistency across multiple images using chat sessions |
 | **Prompt Engineering** | Craft effective prompts for stylized, consistent outputs |
-| **Gemini Image API** | Use Gemini's native image generation (Nano Banana 🍌) via Python SDK |
+| **Gemini Image API** | Use Gemini 3.1 Flash Image Preview (Nano Banana 2 🍌) via Python SDK |
 | **Chat Sessions** | Leverage conversation context for iterative refinement |
 
 ## ✅ What You'll Build

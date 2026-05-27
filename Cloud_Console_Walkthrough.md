@@ -33,7 +33,7 @@ graph TD
     B -->|YES / Deployed Cloud| D[Path B: The Paid GCP Native Track]
     
     subgraph Path A: Free / Mocked Local-First
-        C --> C1[imagen-3.0 image generation]
+        C --> C1[Gemini 3.1 Flash Image Preview Nano Banana 2]
         C1 --> C2[SQLite Star Catalog MCP]
         C2 --> C3[SQLite Spanner Graph Mock]
         C3 --> C4[Low Latency Live WebSocket]
@@ -41,7 +41,7 @@ graph TD
     end
     
     subgraph Path B: Deployed / GCP Native
-        D --> D1[Vertex AI Image Generation]
+        D --> D1[Gemini 3.1 Flash Image Preview Nano Banana 2]
         D1 --> D2[BigQuery Star Triangulation]
         D2 --> D3[Spanner Graph Network Database]
         D3 --> D4[Vertex AI Live Agent Streaming]
@@ -113,7 +113,7 @@ pip install -r requirements.txt
 # Run the generator
 python generator.py
 ```
-💥 **Result**: Imagen-3 via AI Studio will generate your high-res explorer portrait and map icon in `<10 seconds` for free! Open the shared map URL at [https://erinl.space](https://erinl.space) and search for your username to see yourself appearing on the planet map in real-time!
+💥 **Result**: Gemini 3.1 Flash Image Preview (Nano Banana 2) via AI Studio will generate your high-res explorer portrait and map icon in `<10 seconds` for free! Open the shared map URL at [https://erinl.space](https://erinl.space) and search for your username to see yourself appearing on the planet map in real-time!
 
 ---
 
@@ -171,7 +171,7 @@ python backend/main.py
 ---
 
 ### Step A7: Level 3 — Bypass the Biometric Lock (Uvicorn WebSocket)
-Stream audio/video from your camera directly to the `gemini-3.5-flash` Live WebSocket:
+Stream audio/video from your camera directly to the `gemini-3.1-flash-live-preview` Live WebSocket:
 
 ```bash
 # Move to Level 3
@@ -216,7 +216,7 @@ chmod +x scripts/init.sh
 # Start the satellite controller
 python satellite/main.py
 ```
-💥 **Result**: Choose **Web Preview** on **port 8080** to see your flight dashboard. Selecting a shape (e.g. `STAR`) sends the coordinates directly to `gemini-3.5-flash` via standard REST, immediately generating a gorgeous, real-time 3D flight animation around your beacon!
+💥 **Result**: Choose **Web Preview** on **port 8080** to see your flight dashboard. Selecting a shape (e.g. `STAR`) sends the coordinates directly to `gemini-3.5-flash-preview` via standard REST, immediately generating a gorgeous, real-time 3D flight animation around your beacon!
 
 ---
 
