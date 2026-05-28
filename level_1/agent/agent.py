@@ -245,7 +245,7 @@ The tool takes ONE argument:
 
 if __name__ == "__main__":
     import uvicorn
-    from google.adk.a2a import to_a2a
+    from google.adk.a2a.utils.agent_to_a2a import to_a2a
 
     # Get configuration
     PUBLIC_URL = os.environ.get("PUBLIC_URL", "http://localhost:8080")
