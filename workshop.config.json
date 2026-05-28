@@ -3,8 +3,8 @@
     "map_base_url": "https://erinl.space",
     "default_event_code": "gdg",
     "models": {
-        "flash": "gemini-3.5-flash-preview",
-        "live": "gemini-3.1-flash-live-preview",
+        "flash": "gemini-3.5-flash",
+        "live": "gemini-live-2.5-flash-native-audio",
         "image": "gemini-3.1-flash-image-preview",
         "embedding": "gemini-embedding-2"
     }
