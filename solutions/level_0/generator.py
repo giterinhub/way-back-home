@@ -57,7 +57,7 @@ else:
         project=os.environ.get("GOOGLE_CLOUD_PROJECT", config.get("project_id")),
         location="global"
     )
-    image_model = "gemini-2.5-flash-image"
+    image_model = get_model_name("image", "gemini-3.1-flash-image-preview")
     is_vertex = True
 
 

@@ -1,9 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv, find_dotenv
 
-# Load environment variables from .env file (automatically finds it in parent directories)
-load_dotenv(find_dotenv())
 
 app = FastAPI(title="Survivor Network API")
 

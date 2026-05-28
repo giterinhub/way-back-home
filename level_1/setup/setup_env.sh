@@ -14,18 +14,8 @@
 
 set -e
 
-# Get Google Cloud Project ID (check multiple sources)
+# Get Google Cloud Project ID
 PROJECT_ID=$(gcloud config get-value project 2>/dev/null)
-if [ "$PROJECT_ID" = "(unset)" ]; then PROJECT_ID=""; fi
-
-# Fallback: check project_id.txt saved by setup.sh (persists across Cloud Shell sessions)
-if [ -z "$PROJECT_ID" ] && [ -s "$HOME/project_id.txt" ]; then
-    PROJECT_ID=$(cat "$HOME/project_id.txt" | tr -d '[:space:]')
-    if [ -n "$PROJECT_ID" ]; then
-        echo "📋 Restored project from project_id.txt: $PROJECT_ID"
-        gcloud config set project "$PROJECT_ID" --quiet 2>/dev/null
-    fi
-fi
 
 if [ -z "$PROJECT_ID" ]; then
     echo "❌ Could not determine Google Cloud Project ID."
@@ -108,10 +98,6 @@ else
         --display-name="Way Back Home Workshop Service Account" \
         --project=$PROJECT_ID
     echo "      ✓ Service account '$SA_NAME' created"
-    
-    # Wait for identity propagation to prevent "Service account not found" errors
-    echo "      ⏳ Waiting 10 seconds for identity propagation..."
-    sleep 10
 fi
 
 # Grant Vertex AI User role (for Gemini)
@@ -165,15 +151,8 @@ echo "      ✓ Storage Object Viewer role granted"
 echo ""
 echo "[4/6] Configuring Cloud Build IAM for deployments..."
 
-# Robust retrieval of Project Number with retry
-# We use '|| true' to prevent 'set -e' from exiting if the first attempt fails
-PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)' 2>/dev/null || true)
-
-if [ -z "$PROJECT_NUMBER" ]; then
-    echo "      ⚠️  First attempt to get Project Number failed. Retrying..."
-    sleep 5
-    PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')
-fi
+# Get project number (needed for service account emails)
+PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')
 
 # Default compute service account (used during Cloud Build steps)
 COMPUTE_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
@@ -364,3 +343,4 @@ echo "  • GOOGLE_GENAI_USE_VERTEXAI=true (uses Vertex AI for Gemini)"
 echo "  • GOOGLE_CLOUD_LOCATION=$REGION"
 echo ""
 echo "✅ Environment setup complete! Ready to proceed with the codelab instructions."
+echo ""

@@ -61,10 +61,13 @@ python customize.py
 ```
 This stores your personalized design choices directly inside `config.json`.
 
-### 2. Implement the Avatar Generator
-Open [generator.py](file:///c:/Erin/code/way-back-home/level_0/generator.py) (or view the solution in `solutions/level_0/generator.py`). Complete the `TODO` placeholders in `generate_explorer_avatar()` to implement multi-turn image generation:
+### 2. Explore the Avatar Generator Implementation
+Open [generator.py](file:///c:/Erin/code/way-back-home/level_0/generator.py). The avatar generator has been fully pre-implemented with the complete solution logic to ensure flawless end-to-end execution. It leverages the multi-turn chat generation capabilities of **Gemini 3.1 Flash Image Preview (Nano Banana 2)**.
+
+Key implementation components:
 
 #### **Step 1: Create a Chat Session for Character Consistency**
+By initiating a single chat session rather than independent API requests, Gemini remembers the visual traits of your character across subsequent turns:
 ```python
     if not is_vertex and image_model.startswith("imagen-"):
         chat = AIStudioImageChat(client, image_model)
@@ -78,6 +81,7 @@ Open [generator.py](file:///c:/Erin/code/way-back-home/level_0/generator.py) (or
 ```
 
 #### **Step 2: Generate the Explorer Portrait**
+Requests a high-resolution, head-and-shoulders portrait of the character with your specific suit color and appearance details:
 ```python
     portrait_prompt = f"""Create a stylized space explorer portrait.
 
@@ -107,7 +111,8 @@ The white background is essential - the avatar will be composited onto a map."""
         raise e
 ```
 
-#### **Step 3: Generate a Circular Map Icon (Turn 2 for Visual Consistency)**
+#### **Step 3: Generate a Circular Map Icon (Turn 2 for Perfect Visual Consistency)**
+Because we send the second prompt within the same chat session, the model references the previous portrait image to construct a matching square 1:1 marker icon:
 ```python
     icon_prompt = """Now create a circular map icon of this SAME character.
 

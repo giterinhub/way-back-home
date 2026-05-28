@@ -5,20 +5,8 @@ This module generates your unique space explorer avatar using
 multi-turn image generation with Gemini (Nano Banana) for
 character consistency across portrait and icon.
 
-=== CODELAB INSTRUCTIONS ===
-
-You will implement three steps in the generate_explorer_avatar() function:
-
-1. MODULE_5_STEP_1_CREATE_CHAT_SESSION
-   Create a chat session to maintain character consistency
-
-2. MODULE_5_STEP_2_GENERATE_PORTRAIT
-   Generate the explorer portrait with your customizations
-
-3. MODULE_5_STEP_3_GENERATE_ICON
-   Generate a consistent map icon using the same chat session
-
-Follow the instructions in the codelab to complete each step.
+This is the COMPLETE SOLUTION. If you're doing the codelab,
+use the version in level_0/generator.py instead.
 """
 
 from google import genai
@@ -67,9 +55,9 @@ else:
     client = genai.Client(
         vertexai=True,
         project=os.environ.get("GOOGLE_CLOUD_PROJECT", config.get("project_id")),
-        location="us-central1"
+        location="global"
     )
-    image_model = "gemini-2.5-flash-image"
+    image_model = get_model_name("image", "gemini-3.1-flash-image-preview")
     is_vertex = True
 
 
@@ -127,17 +115,10 @@ def generate_explorer_avatar() -> dict:
         dict with portrait_path and icon_path
     """
 
-    # =========================================================================
     # MODULE_5_STEP_1_CREATE_CHAT_SESSION
-    # =========================================================================
-    # TODO: Create a chat session for multi-turn generation
-    #
-    # Create a chat session using client.chats.create() with:
-    # - model: "gemini-2.5-flash-image" (Nano Banana)
-    # - config: GenerateContentConfig with response_modalities=["TEXT", "IMAGE"]
-    #
-    # Hint: You need to use types.GenerateContentConfig
-    # =========================================================================
+    # Create a chat session to maintain character consistency across generations.
+    # The chat session preserves context between turns, so Gemini "remembers"
+    # what it generated and can create consistent variations.
     if not is_vertex and image_model.startswith("imagen-"):
         chat = AIStudioImageChat(client, image_model)
     else:
@@ -148,44 +129,9 @@ def generate_explorer_avatar() -> dict:
             )
         )
 
-    # =========================================================================
     # MODULE_5_STEP_2_GENERATE_PORTRAIT
-    # =========================================================================
-    # TODO: Generate the explorer portrait
-    #
-    # 1. Create a portrait_prompt string that includes:
-    #    - APPEARANCE, USERNAME, and SUIT_COLOR variables
-    #    - Style requirements (digital illustration, white background, etc.)
-    #
-    # 2. Send the prompt using chat.send_message(portrait_prompt)
-    #
-    # 3. Extract the image from the response:
-    #    - Loop through portrait_response.candidates[0].content.parts
-    #    - Find the part where part.inline_data is not None
-    #    - Convert to PIL Image: Image.open(io.BytesIO(part.inline_data.data))
-    #    - Save to "outputs/portrait.png"
-    #
-    # 4. Print progress messages for user feedback
-    # =========================================================================
-    portrait_image = None # Replace this section
-
-    # =========================================================================
-    # MODULE_5_STEP_3_GENERATE_ICON
-    # =========================================================================
-    # TODO: Generate a consistent map icon
-    #
-    # 1. Create an icon_prompt that asks for the SAME character
-    #    - Emphasize consistency: "SAME person, SAME face, SAME suit"
-    #    - Request tighter crop (head and shoulders only)
-    #    - Request white background and square aspect ratio
-    #
-    # 2. Send the prompt using chat.send_message(icon_prompt)
-    #    - The chat session remembers the character from step 2!
-    #
-    # 3. Extract and save the icon image to "outputs/icon.png"
-    #
-    # 4. Print progress messages for user feedback
-    # =========================================================================
+    # First turn: Generate the explorer portrait.
+    # This establishes the character that will be referenced in subsequent turns.
     portrait_prompt = f"""Create a stylized space explorer portrait.
 
 Character appearance: {APPEARANCE}
@@ -221,7 +167,7 @@ The white background is essential - the avatar will be composited onto a map."""
             # Found the image! Convert from bytes to PIL Image and save.
             image_bytes = part.inline_data.data
             portrait_image = Image.open(io.BytesIO(image_bytes))
-            portrait_image.save("outputs/portrait.png")
+            portrait_image.save("~/way-back-home/level_0/outputs/portrait.png")
             break
 
     if portrait_image is None:
@@ -248,10 +194,23 @@ This icon must be immediately recognizable as the same character from the portra
     print("🖼️  Creating map icon...")
     icon_response = chat.send_message(icon_prompt)
 
+    # Extract the icon image from the response
+    icon_image = None
+    for part in icon_response.candidates[0].content.parts:
+        if part.inline_data is not None:
+            image_bytes = part.inline_data.data
+            icon_image = Image.open(io.BytesIO(image_bytes))
+            icon_image.save("~/way-back-home/level_0/outputs/icon.png")
+            break
+
+    if icon_image is None:
+        raise Exception("Failed to generate icon - no image in response")
+
+    print("✓ Icon generated!")
 
     return {
-        "portrait_path": "outputs/portrait.png",
-        "icon_path": "outputs/icon.png"
+        "portrait_path": "~/way-back-home/level_0/outputs/portrait.png",
+        "icon_path": "~/way-back-home/level_0/outputs/icon.png"
     }
 
 
