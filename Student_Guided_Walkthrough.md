@@ -203,10 +203,13 @@ python main.py
 *Leave this running in the background and open a new terminal.*
 
 ### 3. Run the Consensus Crew
-In the new terminal window, navigate back and start the orchestrator root agent running on **`gemini-3.5-flash-preview`**:
+In the new terminal window, configure your Google Cloud project again, load the environment variables, point to your local FastMCP server, and start the orchestrator agent:
 ```bash
 # Navigate to level_1
 cd way-back-home/level_1
+
+# Set the active project to your Google Cloud project ID in the new terminal
+gcloud config set project YOUR_PROJECT_ID
 
 # Load Google Cloud environment variables
 source ../set_env.sh
