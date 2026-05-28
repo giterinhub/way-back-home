@@ -73,7 +73,10 @@ def get_mcp_toolset():
 
     # Build the MCP endpoint URL
     # FastMCP with HTTP transport exposes the MCP protocol at /mcp
-    mcp_endpoint = f"{MCP_SERVER_URL}/mcp"
+    if MCP_SERVER_URL.endswith("/mcp"):
+        mcp_endpoint = MCP_SERVER_URL
+    else:
+        mcp_endpoint = f"{MCP_SERVER_URL.rstrip('/')}/mcp"
 
     logger.info(f"[MCP Tools] Connecting to: {mcp_endpoint}")
 
