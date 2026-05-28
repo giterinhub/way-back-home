@@ -248,7 +248,7 @@ if __name__ == "__main__":
     from google.adk.a2a.utils.agent_to_a2a import to_a2a
 
     # Get configuration
-    PUBLIC_URL = os.environ.get("PUBLIC_URL", "http://localhost:8080")
+    PUBLIC_URL = os.environ.get("PUBLIC_URL", "http://localhost:8081")
     PARTICIPANT_ID = os.environ.get("PARTICIPANT_ID", "")
 
     print(f"\n{'='*60}")
@@ -270,4 +270,4 @@ if __name__ == "__main__":
     )
 
     # Start server
-    uvicorn.run(a2a_app, host="0.0.0.0", port=8080)
+    uvicorn.run(a2a_app, host="0.0.0.0", port=8081)
