@@ -198,12 +198,22 @@ python main.py
 ### 3. Run the Consensus Crew
 In the new terminal window, navigate back and start the orchestrator root agent running on **`gemini-3.5-flash-preview`**:
 ```bash
+# Navigate to level_1
 cd way-back-home/level_1
+
+# Load Google Cloud environment variables
+source ../set_env.sh
+
+# Activate the virtual environment
 source ../.venv/bin/activate
 
 # Install agent dependencies
 pip install -r agent/requirements.txt
 
+# Point to your local FastMCP server
+export MCP_SERVER_URL="http://localhost:8080/mcp"
+
+# Run the consensus orchestrator
 python -m agent.agent
 ```
 
