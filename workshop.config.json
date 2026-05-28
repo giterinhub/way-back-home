@@ -3,9 +3,9 @@
     "map_base_url": "https://erinl.space",
     "default_event_code": "gdg",
     "models": {
-        "flash": "gemini-3.5-flash-preview",
-        "live": "gemini-3.1-flash-live-preview",
-        "image": "gemini-3.1-flash-image-preview",
-        "embedding": "gemini-embedding-2"
+        "flash": "gemini-2.5-flash",
+        "live": "gemini-2.0-flash-exp",
+        "image": "imagen-3.0-generate-002",
+        "embedding": "text-embedding-004"
     }
 }
