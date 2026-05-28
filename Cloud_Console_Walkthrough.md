@@ -98,21 +98,29 @@ This will create a `config.json` in your root directory and build your local pyt
 ---
 
 ### Step A4: Level 0 — Establish Your Identity (Avatar Generator)
-Implement the `TODO` image-generation chat steps inside `level_0/generator.py` (or view `solutions/level_0/generator.py` for inspiration). Then run the avatar generator:
 
-```bash
-# Move to level 0 directory
-cd level_0
+1. **Customize Your Explorer**:
+   Run the interactive styling script to select your space suit color and describe your explorer's appearance:
+   ```bash
+   # Move to level 0 directory
+   cd level_0
 
-# Activate virtual environment
-source ../.venv/bin/activate
+   # Run the customization script (stores choices in config.json)
+   python customize.py
+   ```
 
-# Install requirements
-pip install -r requirements.txt
+2. **Implement & Run the Generator**:
+   Implement the `TODO` image-generation chat steps inside `level_0/generator.py` (or view `solutions/level_0/generator.py` for inspiration). Then run the avatar generator:
+   ```bash
+   # Activate virtual environment
+   source ../.venv/bin/activate
 
-# Run the generator
-python generator.py
-```
+   # Install requirements
+   pip install -r requirements.txt
+
+   # Run the generator
+   python generator.py
+   ```
 💥 **Result**: Gemini 3.1 Flash Image Preview (Nano Banana 2) via AI Studio will generate your high-res explorer portrait and map icon in `<10 seconds` for free! Open the shared map URL at [https://erinl.space](https://erinl.space) and search for your username to see yourself appearing on the planet map in real-time!
 
 ---
@@ -257,16 +265,24 @@ chmod +x ./scripts/setup.sh
 ---
 
 ### Step B4: Level 0 — Vertex AI Avatar Generation
-Open `level_0/generator.py`. Fill in the image-generation chat steps. Then execute the generator:
 
-```bash
-cd level_0
-source ../.venv/bin/activate
-pip install -r requirements.txt
+1. **Customize Your Explorer**:
+   Run the interactive styling script to select your space suit color and describe your explorer's appearance:
+   ```bash
+   cd level_0
+   python customize.py
+   ```
+   This stores your personalized preferences inside `config.json`.
 
-# Run generator in Vertex AI mode
-python generator.py
-```
+2. **Implement & Run the Generator**:
+   Open `level_0/generator.py`. Fill in the image-generation chat steps. Then execute the generator:
+   ```bash
+   source ../.venv/bin/activate
+   pip install -r requirements.txt
+
+   # Run generator in Vertex AI mode
+   python generator.py
+   ```
 💥 **Result**: The chat session generates a consistent portrait and map icon using the Cloud Vertex AI Image API.
 
 ---

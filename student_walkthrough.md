@@ -43,15 +43,22 @@ chmod +x ./scripts/student_sandbox.sh
 ```
 *Note*: During this step, enter the Event Code **`gdg`** and choose your custom explorer name! This script automatically registers you on the live shared workshop map and generates your local `config.json`.
 
-### 2. Implement the Avatar Generator
+### 2. Customize Your Explorer
+Run the interactive customization script to choose your space suit color and describe your explorer's appearance:
+```bash
+cd level_0
+python customize.py
+```
+This stores your personalized design choices directly inside `config.json`.
+
+### 3. Implement the Avatar Generator
 Open [generator.py](file:///c:/Erin/code/way-back-home/level_0/generator.py) (or view the solution in `solutions/level_0/generator.py`). Complete the `TODO` placeholders to:
 - **Step 1**: Create a consistent image generation chat session.
 - **Step 2**: Generate a portrait using character customization properties.
 - **Step 3**: Generate a consistent map icon in the same chat session.
 
-### 3. Run the Generator
+### 4. Run the Generator
 ```bash
-cd level_0
 source ../.venv/bin/activate  # Ensure venv is active
 pip install -r requirements.txt
 python generator.py
