@@ -173,6 +173,12 @@ graph TD
 
 ### 1. Seed the Catalog & Generate Multimodal Evidence
 Configure your Google Cloud environment, seed the local SQLite star database, and generate the crash site evidence feeds:
+
+> [!WARNING]
+> Do **NOT** run `source setup/setup_env.sh`! Sourcing this setup script will cause your active terminal window to exit and close. 
+> Always execute it directly using: **`./setup/setup_env.sh`**. 
+> (Only use `source` on **`../set_env.sh`** to load the variables afterwards!)
+
 ```bash
 cd ../level_1
 
