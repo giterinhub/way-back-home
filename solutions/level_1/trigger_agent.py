@@ -39,7 +39,7 @@ async def main():
         async for event in runner.run_async(
             user_id=user_id,
             session_id=session_id,
-            new_message=Content(role="user", parts=[Part(text="Analyze the evidence and confirm my location.")])
+            new_message=Content(role="user", parts=[Part(text="Analyze the evidence, coordinate with your specialists to determine the biome, and call the confirm_location tool to activate my rescue beacon.")])
         ):
             try:
                 if hasattr(event, "text") and event.text:
