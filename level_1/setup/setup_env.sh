@@ -278,7 +278,7 @@ cat <<EOF > "$ENV_FILE"
 export GOOGLE_CLOUD_PROJECT="$PROJECT_ID"
 export PROJECT_ID="$PROJECT_ID"
 export REGION="$REGION"
-export GOOGLE_CLOUD_LOCATION="$REGION"
+export GOOGLE_CLOUD_LOCATION="global"
 
 # ADK Configuration - Required for adk web and agent execution
 export GOOGLE_GENAI_USE_VERTEXAI=true
@@ -343,7 +343,7 @@ echo "Backend URL: $BACKEND_URL"
 echo ""
 echo "ADK Configuration:"
 echo "  • GOOGLE_GENAI_USE_VERTEXAI=true (uses Vertex AI for Gemini)"
-echo "  • GOOGLE_CLOUD_LOCATION=$REGION"
+echo "  • GOOGLE_CLOUD_LOCATION=global"
 echo ""
 echo "✅ Environment setup complete! Ready to proceed with the codelab instructions."
 echo ""

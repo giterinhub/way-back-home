@@ -60,7 +60,7 @@ if not PROJECT_ID:
 genai_client = genai.Client(
     vertexai=True,
     project=PROJECT_ID or "placeholder",
-    location=os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
+    location=os.environ.get("GOOGLE_CLOUD_LOCATION", "global")
 )
 
 logger.info(f"[Star Tools] Initialized for project: {PROJECT_ID}")

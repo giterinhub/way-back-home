@@ -67,7 +67,7 @@ mcp = FastMCP("Location Analyzer MCP Server 🛸")
 
 # Get project ID from environment
 PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT")
-LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
+LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION", "global")
 
 if not PROJECT_ID:
     logger.warning("GOOGLE_CLOUD_PROJECT not set - tools will fail")
