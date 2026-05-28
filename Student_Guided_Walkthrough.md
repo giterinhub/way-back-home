@@ -229,12 +229,20 @@ pip install -r agent/requirements.txt
 # Point to your local FastMCP server
 export MCP_SERVER_URL="http://localhost:8080/mcp"
 
-# Run the consensus orchestrator
-python -m agent.agent
+# Run the local ADK chat playground
+adk web
 ```
 
+### 4. Trigger the Rescue Beacon Consensus
+Once `adk web` is running, follow these steps to trigger your agent:
+1. In your Cloud Shell toolbar, click the **Web Preview** icon and select **Preview on port 8000** (or change port to `8000` if needed).
+2. This opens the beautiful **ADK Agent Playground** in your browser!
+3. In the chat interface, send the following instruction to the agent:
+   > **`Analyze the evidence and confirm my location.`**
+4. Watch the root orchestrator spin up the **EvidenceAnalysisCrew** to execute the geological, botanical, and astronomical analyses in parallel, synthesize their findings, and call the `confirm_location` tool!
+
 > [!NOTE]
-> The geological, botanical, and astronomical specialists run parallel analyses on the crash evidence. The orchestrator collects their findings and applies a 2-of-3 majority consensus algorithm to verify your biome, successfully firing your beacon on [https://erinl.space](https://erinl.space)!
+> When the agent successfully calls the `confirm_location` tool, it transmits your coordinates to the hosted API backend, successfully firing your beacon on [https://erinl.space](https://erinl.space)! Check the live map to see your explorer avatar pulsing with a green rescue signal!
 
 ---
 
