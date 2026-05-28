@@ -24,6 +24,22 @@ load_dotenv()
 # pylint: disable=wrong-import-position
 from biometric_agent.agent import root_agent  # noqa: E402
 
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, # Default to INFO
@@ -92,6 +108,9 @@ async def websocket_endpoint(
     await websocket.accept()
     logger.info(f"WebSocket connected: {user_id}/{session_id}")
 
+    if os.environ.get("GEMINI_API_KEY"):
+        root_agent.model = get_model_name("live", "gemini-3.1-flash-live-preview")
+
     # ========================================
     # Phase 2: Session Initialization (once per streaming session)
     # ========================================
@@ -103,7 +122,11 @@ async def websocket_endpoint(
     # we default to TEXT for better performance.
 
     model_name = root_agent.model
-    is_native_audio = "native-audio" in model_name.lower() or "live" in model_name.lower()
+    if os.environ.get("GEMINI_API_KEY"):
+        root_agent.model = get_model_name("live", "gemini-3.1-flash-live-preview")
+        model_name = get_model_name("live", "gemini-3.1-flash-live-preview")
+
+    is_native_audio = "native-audio" in model_name.lower() or "live" in model_name.lower() or "exp" in model_name.lower()
 
     if is_native_audio:
         # Native audio models require AUDIO response modality

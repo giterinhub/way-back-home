@@ -22,16 +22,85 @@ CONFIG_PATH = "../config.json"
 with open(CONFIG_PATH) as f:
     config = json.load(f)
 
-USERNAME = config["username"]
-SUIT_COLOR = config["suit_color"]
-APPEARANCE = config["appearance"]
+USERNAME = config.get("username", "explorer")
 
-# Initialize the Gemini client for Vertex AI
-client = genai.Client(
-    vertexai=True,
-    project=os.environ.get("GOOGLE_CLOUD_PROJECT", config.get("project_id")),
-    location="global"
-)
+if "suit_color" not in config or "appearance" not in config:
+    print("⚠️  Warning: Explorer customization properties ('suit_color', 'appearance') not found in config.json.")
+    print("   Please run 'python customize.py' to select your space suit color and appearance!")
+    print("   Using default explorer traits for now...\n")
+
+SUIT_COLOR = config.get("suit_color", "metallic silver with blue accents")
+APPEARANCE = config.get("appearance", "friendly smile, short styled hair")
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+# Initialize the Gemini client (auto-detect AI Studio API key or Vertex AI)
+if os.environ.get("GEMINI_API_KEY"):
+    client = genai.Client() # Uses the key from environment
+    image_model = get_model_name("image", "gemini-3.1-flash-image-preview")
+    is_vertex = False
+else:
+    client = genai.Client(
+        vertexai=True,
+        project=os.environ.get("GOOGLE_CLOUD_PROJECT", config.get("project_id")),
+        location="global"
+    )
+    image_model = "gemini-2.5-flash-image"
+    is_vertex = True
+
+
+class AIStudioImageChat:
+    """Mock chat class to handle image generation via AI Studio's Imagen API."""
+    def __init__(self, client, image_model):
+        self.client = client
+        self.image_model = image_model
+        self.history = []
+
+    def send_message(self, prompt_text: str):
+        print(f"Generating image via AI Studio {self.image_model}...")
+        response = self.client.models.generate_images(
+            model=self.image_model,
+            prompt=prompt_text,
+            config=types.GenerateImagesConfig(
+                number_of_images=1,
+                aspect_ratio="1:1",
+                output_mime_type="image/png"
+            )
+        )
+        
+        class MockPart:
+            def __init__(self, data):
+                class MockInlineData:
+                    def __init__(self, d):
+                        self.data = d
+                self.inline_data = MockInlineData(data)
+
+        class MockContent:
+            def __init__(self, data):
+                self.parts = [MockPart(data)]
+
+        class MockCandidate:
+            def __init__(self, data):
+                self.content = MockContent(data)
+
+        class MockResponse:
+            def __init__(self, data):
+                self.candidates = [MockCandidate(data)]
+
+        img_bytes = response.generated_images[0].image.image_bytes
+        return MockResponse(img_bytes)
 
 
 def generate_explorer_avatar() -> dict:
@@ -50,12 +119,15 @@ def generate_explorer_avatar() -> dict:
     # Create a chat session to maintain character consistency across generations.
     # The chat session preserves context between turns, so Gemini "remembers"
     # what it generated and can create consistent variations.
-    chat = client.chats.create(
-        model="gemini-2.5-flash-image",  # Nano Banana - Gemini with image generation
-        config=types.GenerateContentConfig(
-            response_modalities=["TEXT", "IMAGE"]
+    if not is_vertex and image_model.startswith("imagen-"):
+        chat = AIStudioImageChat(client, image_model)
+    else:
+        chat = client.chats.create(
+            model=image_model,
+            config=types.GenerateContentConfig(
+                response_modalities=["TEXT", "IMAGE"]
+            )
         )
-    )
 
     # MODULE_5_STEP_2_GENERATE_PORTRAIT
     # First turn: Generate the explorer portrait.
@@ -78,7 +150,14 @@ CRITICAL STYLE REQUIREMENTS:
 The white background is essential - the avatar will be composited onto a map."""
 
     print("🎨 Generating your portrait...")
-    portrait_response = chat.send_message(portrait_prompt)
+    try:
+        portrait_response = chat.send_message(portrait_prompt)
+    except Exception as e:
+        err_str = str(e).lower()
+        if "prepayment" in err_str or "resource_exhausted" in err_str or "429" in err_str:
+            print("\n❌ Error: Your API Key does not have prepaid credits for the preview model configured in workshop.config.json.")
+            print("   Please either add prepayment credits to your AI Studio account, or change the 'image' model to 'imagen-3.0-generate-002' inside workshop.config.json!\n")
+        raise e
 
     # Extract the image from the response.
     # Gemini returns a response with multiple "parts" - we need to find the image part.

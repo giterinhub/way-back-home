@@ -24,6 +24,22 @@ load_dotenv()
 # pylint: disable=wrong-import-position
 from biometric_agent.agent import root_agent  # noqa: E402
 
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, # Default to INFO
@@ -87,6 +103,9 @@ async def websocket_endpoint(
     """
     await websocket.accept()
     logger.info(f"WebSocket connected: {user_id}/{session_id}")
+
+    if os.environ.get("GEMINI_API_KEY"):
+        root_agent.model = get_model_name("live", "gemini-3.1-flash-live-preview")
 
     #REPLACE_SESSION_INIT
     
