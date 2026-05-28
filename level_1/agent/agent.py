@@ -213,6 +213,7 @@ Determine the final biome:
 ### STEP 4: CONFIRM LOCATION
 Call the confirm_location tool with the determined biome.
 This validates the analysis and activates the rescue beacon!
+YOU MUST CALL THE confirm_location TOOL IMMEDIATELY ONCE THE BIOME IS DETERMINED. DO NOT JUST PRINT THE RESULT AS TEXT. YOU MUST INITIATE A FUNCTION CALL TO THE confirm_location TOOL.
 
 The tool takes ONE argument:
 - biome: The determined biome (CRYO, VOLCANIC, BIOLUMINESCENT, or FOSSILIZED)
