@@ -67,6 +67,17 @@ def generate_avatar() -> dict:
     Returns:
         dict with portrait_path and icon_path
     """
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    portrait_path = os.path.join(base_dir, "outputs", "portrait.png")
+    icon_path = os.path.join(base_dir, "outputs", "icon.png")
+
+    if os.path.exists(portrait_path) and os.path.exists(icon_path):
+        print("ℹ️  Found existing avatar portrait and icon in outputs directory. Using cached images!")
+        return {
+            "portrait_path": portrait_path,
+            "icon_path": icon_path
+        }
+
     # Import the user's generator module (same directory)
     try:
         from generator import generate_explorer_avatar
