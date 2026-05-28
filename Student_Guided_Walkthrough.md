@@ -172,9 +172,16 @@ graph TD
 ```
 
 ### 1. Seed the Catalog & Generate Multimodal Evidence
-Install the setup dependencies, seed the local SQLite star database, and generate the crash site evidence feeds:
+Configure your Google Cloud environment, seed the local SQLite star database, and generate the crash site evidence feeds:
 ```bash
 cd ../level_1
+
+# Configure Google Cloud environment (enables APIs, creates service account, generates set_env.sh)
+chmod +x setup/setup_env.sh
+./setup/setup_env.sh
+
+# Source environment variables
+source ../set_env.sh
 
 # Install setup dependencies
 pip install -r setup/requirements.txt
