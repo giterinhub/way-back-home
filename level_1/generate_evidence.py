@@ -451,7 +451,7 @@ def generate_flora_video(biome: str) -> str:
 
     # Generate video with Veo 3.1 (includes native audio generation)
     operation = client.models.generate_videos(
-        model="veo-3.1-generate-preview",
+        model="veo-3.1-generate-001",
         prompt=prompts["flora_prompt"],
         config=types.GenerateVideosConfig(
             aspect_ratio="16:9",
