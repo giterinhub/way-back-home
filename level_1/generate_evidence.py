@@ -356,7 +356,7 @@ This is the night sky from an ancient fossilized alien world's surface."""
 client = genai.Client(
     vertexai=True,
     project=os.environ.get("GOOGLE_CLOUD_PROJECT", config.get("project_id")),
-    location="global"
+    location="us-central1"
 )
 
 
