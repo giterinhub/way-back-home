@@ -18,16 +18,29 @@ To begin your adventure, you will configure your Cloud Shell terminal and initia
 3. Wait for the terminal pane to connect.
 
 ### 2. Clone the Workshop Repository
-In your Cloud Shell terminal, clone the code and enter the project folder:
+In your Cloud Shell terminal, clone the personal workshop repository, switch to the feature branch, and enter the project folder:
 ```bash
 # Clone the repository
-git clone https://github.com/google-americas/way-back-home.git
+git clone https://github.com/giterinhub/way-back-home.git
 
 # Enter the workshop directory
 cd way-back-home
+
+# Switch to the student walkthrough feature branch
+git checkout feature/student-walkthrough
 ```
 
-### 3. Initialize Your Explorer Profile
+### 3. Configure Google Cloud Project
+Set up your active Google Cloud project ID and verify authentication:
+```bash
+# Authenticate with Google Cloud
+gcloud auth login
+
+# Set the active project to your Google Cloud project ID
+gcloud config set project YOUR_PROJECT_ID
+```
+
+### 4. Initialize Your Explorer Profile
 Run the student sandbox setup script. This registers you on the live planetary network and generates your local `config.json`:
 ```bash
 ./scripts/setup.sh
