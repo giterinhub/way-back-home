@@ -164,8 +164,8 @@ The white background is essential - the avatar will be composited onto a map."""
     portrait_image = None
     for part in portrait_response.candidates[0].content.parts:
         if part.inline_data is not None:
-            # Found the image! Convert from bytes to PIL Image and save.
             image_bytes = part.inline_data.data
+            portrait_image = Image.open(io.BytesIO(image_bytes))
             # Determine the directory of the current file dynamically
             base_dir = os.path.dirname(os.path.abspath(__file__))
             portrait_path = os.path.join(base_dir, "outputs", "portrait.png")
@@ -202,6 +202,7 @@ This icon must be immediately recognizable as the same character from the portra
     for part in icon_response.candidates[0].content.parts:
         if part.inline_data is not None:
             image_bytes = part.inline_data.data
+            icon_image = Image.open(io.BytesIO(image_bytes))
             # Determine the directory of the current file dynamically
             base_dir = os.path.dirname(os.path.abspath(__file__))
             icon_path = os.path.join(base_dir, "outputs", "icon.png")
