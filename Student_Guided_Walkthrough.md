@@ -172,11 +172,16 @@ graph TD
 ```
 
 ### 1. Seed the Catalog & Generate Multimodal Evidence
-Extract files from your pod's landing recorder and set up the local star databases:
+Install the setup dependencies, seed the local SQLite star database, and generate the crash site evidence feeds:
 ```bash
 cd ../level_1
+
+# Install setup dependencies
+pip install -r setup/requirements.txt
+
 # Seed local SQLite star catalog
 python setup/setup_star_catalog.py
+
 # Extract geological, botanical, and star feeds
 python generate_evidence.py   
 ```
