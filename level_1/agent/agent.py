@@ -260,7 +260,14 @@ if __name__ == "__main__":
     print(f"{'='*60}\n")
 
     # Create A2A-wrapped application
-    a2a_app = to_a2a(root_agent, port=8080, public_url=PUBLIC_URL)
+    from urllib.parse import urlparse
+    parsed_url = urlparse(PUBLIC_URL)
+    a2a_app = to_a2a(
+        root_agent,
+        host=parsed_url.hostname or "localhost",
+        port=parsed_url.port or (80 if parsed_url.scheme == "http" else 443),
+        protocol=parsed_url.scheme or "http"
+    )
 
     # Start server
     uvicorn.run(a2a_app, host="0.0.0.0", port=8080)
