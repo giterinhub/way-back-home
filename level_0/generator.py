@@ -34,9 +34,15 @@ CONFIG_PATH = "../config.json"
 with open(CONFIG_PATH) as f:
     config = json.load(f)
 
-USERNAME = config["username"]
-SUIT_COLOR = config["suit_color"]
-APPEARANCE = config["appearance"]
+USERNAME = config.get("username", "explorer")
+
+if "suit_color" not in config or "appearance" not in config:
+    print("⚠️  Warning: Explorer customization properties ('suit_color', 'appearance') not found in config.json.")
+    print("   Please run 'python customize.py' to select your space suit color and appearance!")
+    print("   Using default explorer traits for now...\n")
+
+SUIT_COLOR = config.get("suit_color", "metallic silver with blue accents")
+APPEARANCE = config.get("appearance", "friendly smile, short styled hair")
 
 def get_model_name(model_key: str, default: str) -> str:
     import os, json
