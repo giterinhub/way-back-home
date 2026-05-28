@@ -200,7 +200,10 @@ In the new terminal window, navigate back and start the orchestrator root agent 
 ```bash
 cd way-back-home/level_1
 source ../.venv/bin/activate
-pip install -r requirements.txt
+
+# Install agent dependencies
+pip install -r agent/requirements.txt
+
 python agent/agent.py
 ```
 
