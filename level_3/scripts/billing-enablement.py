@@ -2,6 +2,7 @@ import os
 import re
 import subprocess
 import time
+import json
 from datetime import datetime
 from google.cloud import billing_v1
 from google.api_core import exceptions
@@ -15,22 +16,61 @@ SUFFIX_PATTERN = re.compile(r"-\d{12}$")
 
 
 def get_project_id_from_file():
-    """Reads the project ID from the file created by the init.sh script."""
-    project_file = os.path.expanduser("~/project_id.txt")
-    if not os.path.exists(project_file):
-        print(f"Error: Project ID file not found at {project_file}")
-        return None
+    """Reads the project ID from env, config.json, gcloud config, or the file created by the init.sh script."""
+    # 1. Try environment variables
+    env_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("PROJECT_ID")
+    if env_project:
+        print(f"--- Found Project ID from environment: {env_project} ---")
+        return env_project
+
+    # 2. Try config.json in project root or parent directories
+    curr_dir = os.path.dirname(os.path.abspath(__file__))
+    while True:
+        cfg_path = os.path.join(curr_dir, "config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path, "r") as f:
+                    project_id = json.load(f).get("project_id")
+                    if project_id:
+                        print(f"--- Found Project ID from config.json: {project_id} ---")
+                        return project_id
+            except Exception:
+                pass
+        parent = os.path.dirname(curr_dir)
+        if parent == curr_dir:
+            break
+        curr_dir = parent
+
+    # 3. Try running gcloud config get-value project
     try:
-        with open(project_file, "r") as f:
-            project_id = f.read().strip()
-        if not project_id:
-            print("Error: Project ID file is empty.")
-            return None
-        print(f"--- Found Project ID from file: {project_id} ---")
-        return project_id
-    except Exception as e:
-        print(f"Error reading project ID from file: {e}")
-        return None
+        result = subprocess.run(
+            ["gcloud", "config", "get-value", "project"],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if result.returncode == 0:
+            gcloud_project = result.stdout.strip()
+            if gcloud_project and gcloud_project != "(unset)":
+                print(f"--- Found Project ID from gcloud config: {gcloud_project} ---")
+                return gcloud_project
+    except Exception:
+        pass
+
+    # 4. Fallback to ~/project_id.txt
+    project_file = os.path.expanduser("~/project_id.txt")
+    if os.path.exists(project_file):
+        try:
+            with open(project_file, "r") as f:
+                project_id = f.read().strip()
+            if project_id:
+                print(f"--- Found Project ID from file: {project_id} ---")
+                return project_id
+        except Exception as e:
+            print(f"Error reading project ID from file: {e}")
+
+    print(f"Warning: Could not determine Project ID from env, config.json, gcloud, or {project_file}")
+    return None
 
 
 def enable_billing_api(project_id):
