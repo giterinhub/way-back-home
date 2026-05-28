@@ -228,21 +228,35 @@ pip install -r agent/requirements.txt
 
 # Point to your local FastMCP server
 export MCP_SERVER_URL="http://localhost:8080/mcp"
-
-# Run the local ADK chat playground
-adk web
 ```
 
 ### 4. Trigger the Rescue Beacon Consensus
-Once `adk web` is running, follow these steps to trigger your agent:
-1. In your Cloud Shell toolbar, click the **Web Preview** icon and select **Preview on port 8000** (or change port to `8000` if needed).
-2. This opens the beautiful **ADK Agent Playground** in your browser!
-3. In the chat interface, send the following instruction to the agent:
+
+To invoke your agent and activate your beacon, choose **one** of the two options below:
+
+#### **Option A: The Visual ADK Web Playground (Interactive)**
+This is the recommended path to interact with your agent visually.
+1. Start the local playground server in your terminal:
+   ```bash
+   adk web
+   ```
+2. In your Cloud Shell toolbar, click the **Web Preview** icon and select **Preview on port 8000** (or change port to `8000` if needed).
+3. In the beautiful ADK Agent Playground that opens in your browser, type and send:
    > **`Analyze the evidence and confirm my location.`**
-4. Watch the root orchestrator spin up the **EvidenceAnalysisCrew** to execute the geological, botanical, and astronomical analyses in parallel, synthesize their findings, and call the `confirm_location` tool!
+4. Watch the parallel analysts execute, synthesize their results, and call `confirm_location` to fire your beacon!
+
+*Note: If the Google Cloud Shell Web Preview proxy blocks the session request with a `"Failed to create session" / 403 Forbidden` error due to CSRF origin protection, press `Ctrl+C` to stop `adk web` and use **Option B** below.*
+
+#### **Option B: The Direct Terminal Trigger (Foolproof Fallback)**
+This is a robust, terminal-only path that bypasses all browser proxies and CSRF origin checks.
+1. Run the dedicated local execution script:
+   ```bash
+   python trigger_agent.py
+   ```
+2. The agent runs locally, connects directly to your FastMCP server, executes all three specialists concurrently, applies the 2-of-3 majority consensus, and calls the `confirm_location` tool directly in your terminal window!
 
 > [!NOTE]
-> When the agent successfully calls the `confirm_location` tool, it transmits your coordinates to the hosted API backend, successfully firing your beacon on [https://erinl.space](https://erinl.space)! Check the live map to see your explorer avatar pulsing with a green rescue signal!
+> Regardless of which option you use, once the agent successfully resolves the biome and calls the `confirm_location` tool, it transmits your coordinates to the hosted API backend! Go back to the planetary map at [https://erinl.space](https://erinl.space) and search for your handle to see your avatar updated to **Level 1** with a pulsing green rescue beacon!
 
 ---
 
