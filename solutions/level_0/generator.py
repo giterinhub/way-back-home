@@ -155,12 +155,9 @@ The white background is essential - the avatar will be composited onto a map."""
     except Exception as e:
         err_str = str(e).lower()
         if "prepayment" in err_str or "resource_exhausted" in err_str or "429" in err_str:
-            print("\n⚠️  Note: Your API Key does not have prepaid credits for the preview model.")
-            print("   Automatically falling back to the free-tier model: 'imagen-3.0-generate-002'...\n")
-            chat = AIStudioImageChat(client, "imagen-3.0-generate-002")
-            portrait_response = chat.send_message(portrait_prompt)
-        else:
-            raise e
+            print("\n❌ Error: Your API Key does not have prepaid credits for the preview model configured in workshop.config.json.")
+            print("   Please either add prepayment credits to your AI Studio account, or change the 'image' model to 'imagen-3.0-generate-002' inside workshop.config.json!\n")
+        raise e
 
     # Extract the image from the response.
     # Gemini returns a response with multiple "parts" - we need to find the image part.
