@@ -3,7 +3,7 @@ uvicorn
 websockets
 google-genai
 python-dotenv
-google-adk
+google-adk[a2a]
 pydantic
 a2a-sdk
 redis

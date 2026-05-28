@@ -4,6 +4,6 @@ numpy
 google-genai
 websockets
 python-dotenv
-google-adk
+google-adk[a2a]
 a2a-sdk
 aiokafka

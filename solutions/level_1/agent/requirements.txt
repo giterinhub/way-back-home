@@ -2,7 +2,7 @@
 
 # Google ADK - Agent framework with MCP support
 # Provides: Agent, ParallelAgent, CallbackContext, ToolContext, MCPToolset, etc.
-google-adk>=0.1.0
+google-adk[a2a]>=0.1.0
 
 # Google Gemini SDK - For local FunctionTools (star feature extraction)
 google-genai>=1.0.0
