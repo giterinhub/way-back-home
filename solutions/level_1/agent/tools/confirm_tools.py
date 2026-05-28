@@ -77,13 +77,13 @@ def confirm_location(biome: str, tool_context: ToolContext) -> dict:
     participant_id = tool_context.state.get("participant_id", "")
     x = tool_context.state.get("x", 0)
     y = tool_context.state.get("y", 0)
-    backend_url = tool_context.state.get("backend_url", "https://api.waybackhome.dev")
+    backend_url = tool_context.state.get("backend_url", "https://api.erinl.space")
 
     # Fallback to environment variables if state is empty
     if not participant_id:
         participant_id = os.environ.get("PARTICIPANT_ID", "")
     if not backend_url:
-        backend_url = os.environ.get("BACKEND_URL", "https://api.waybackhome.dev")
+        backend_url = os.environ.get("BACKEND_URL", "https://api.erinl.space")
 
     logger.info(f"[Confirm] participant_id={participant_id}, coords=({x}, {y})")
 

@@ -75,7 +75,7 @@ async def setup_participant_context(callback_context: CallbackContext) -> None:
     """
     # Get configuration from environment variables
     participant_id = os.environ.get("PARTICIPANT_ID", "")
-    backend_url = os.environ.get("BACKEND_URL", "https://api.waybackhome.dev")
+    backend_url = os.environ.get("BACKEND_URL", "https://api.erinl.space")
     project_id = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
 
     logger.info(f"[Callback] Setting up context for participant: {participant_id}")

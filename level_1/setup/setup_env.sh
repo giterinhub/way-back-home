@@ -238,7 +238,7 @@ fi
 # 3. Default shared workshop backend
 
 BACKEND_ENV_FILE="$SCRIPT_DIR/../../dashboard/backend/.env"
-DEFAULT_BACKEND_URL="https://api.waybackhome.dev"
+DEFAULT_BACKEND_URL="https://api.erinl.space"
 
 if [ -f "$BACKEND_ENV_FILE" ]; then
     # Check dashboard/backend/.env for custom backend URL

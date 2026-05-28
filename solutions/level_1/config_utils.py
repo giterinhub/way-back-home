@@ -131,7 +131,7 @@ def get_config(force_refresh: bool = False) -> dict:
     if participant_id:
         backend_url = os.environ.get(
             "BACKEND_URL",
-            os.environ.get("API_BASE", "https://api.waybackhome.dev")
+            os.environ.get("API_BASE", "https://api.erinl.space")
         )
         logger.info(f"[Config] Cloud Run mode - fetching for participant: {participant_id}")
         _config_cache = fetch_from_backend(participant_id, backend_url)
@@ -221,4 +221,4 @@ def get_backend_url() -> str:
 
     # Fall back to config
     config = get_config()
-    return config.get("api_base", "https://api.waybackhome.dev")
+    return config.get("api_base", "https://api.erinl.space")
