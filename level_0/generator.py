@@ -73,6 +73,48 @@ else:
     is_vertex = True
 
 
+class AIStudioImageChat:
+    """Mock chat class to handle image generation via AI Studio's Imagen API."""
+    def __init__(self, client, image_model):
+        self.client = client
+        self.image_model = image_model
+        self.history = []
+
+    def send_message(self, prompt_text: str):
+        print(f"Generating image via AI Studio {self.image_model}...")
+        response = self.client.models.generate_images(
+            model=self.image_model,
+            prompt=prompt_text,
+            config=types.GenerateImagesConfig(
+                number_of_images=1,
+                aspect_ratio="1:1",
+                output_mime_type="image/png"
+            )
+        )
+        
+        class MockPart:
+            def __init__(self, data):
+                class MockInlineData:
+                    def __init__(self, d):
+                        self.data = d
+                self.inline_data = MockInlineData(data)
+
+        class MockContent:
+            def __init__(self, data):
+                self.parts = [MockPart(data)]
+
+        class MockCandidate:
+            def __init__(self, data):
+                self.content = MockContent(data)
+
+        class MockResponse:
+            def __init__(self, data):
+                self.candidates = [MockCandidate(data)]
+
+        img_bytes = response.generated_images[0].image.image_bytes
+        return MockResponse(img_bytes)
+
+
 def generate_explorer_avatar() -> dict:
     """
     Generate portrait and icon using multi-turn chat for consistency.
@@ -97,48 +139,6 @@ def generate_explorer_avatar() -> dict:
     # Hint: You need to use types.GenerateContentConfig
     # =========================================================================
     if not is_vertex and image_model.startswith("imagen-"):
-        # Create a mock chat class to handle image generation via AI Studio's Imagen API
-        # while keeping the participant's multi-turn code completely identical.
-        class AIStudioImageChat:
-            def __init__(self, client, image_model):
-                self.client = client
-                self.image_model = image_model
-                self.history = []
-
-            def send_message(self, prompt_text: str):
-                print(f"Generating image via AI Studio {self.image_model}...")
-                response = self.client.models.generate_images(
-                    model=self.image_model,
-                    prompt=prompt_text,
-                    config=types.GenerateImagesConfig(
-                        number_of_images=1,
-                        aspect_ratio="1:1",
-                        output_mime_type="image/png"
-                    )
-                )
-                
-                class MockPart:
-                    def __init__(self, data):
-                        class MockInlineData:
-                            def __init__(self, d):
-                                self.data = d
-                        self.inline_data = MockInlineData(data)
-
-                class MockContent:
-                    def __init__(self, data):
-                        self.parts = [MockPart(data)]
-
-                class MockCandidate:
-                    def __init__(self, data):
-                        self.content = MockContent(data)
-
-                class MockResponse:
-                    def __init__(self, data):
-                        self.candidates = [MockCandidate(data)]
-
-                img_bytes = response.generated_images[0].image.image_bytes
-                return MockResponse(img_bytes)
-
         chat = AIStudioImageChat(client, image_model)
     else:
         chat = client.chats.create(
@@ -204,7 +204,17 @@ CRITICAL STYLE REQUIREMENTS:
 The white background is essential - the avatar will be composited onto a map."""
 
     print("🎨 Generating your portrait...")
-    portrait_response = chat.send_message(portrait_prompt)
+    try:
+        portrait_response = chat.send_message(portrait_prompt)
+    except Exception as e:
+        err_str = str(e).lower()
+        if "prepayment" in err_str or "resource_exhausted" in err_str or "429" in err_str:
+            print("\n⚠️  Note: Your API Key does not have prepaid credits for the preview model.")
+            print("   Automatically falling back to the free-tier model: 'imagen-3.0-generate-002'...\n")
+            chat = AIStudioImageChat(client, "imagen-3.0-generate-002")
+            portrait_response = chat.send_message(portrait_prompt)
+        else:
+            raise e
 
     # Extract the image from the response.
     # Gemini returns a response with multiple "parts" - we need to find the image part.
