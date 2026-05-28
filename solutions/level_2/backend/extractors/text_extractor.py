@@ -1,3 +1,18 @@
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
 import json
 import logging
 import os
@@ -24,7 +39,7 @@ class TextExtractor(BaseExtractor):
             project=os.getenv('PROJECT_ID'), 
             location=os.getenv('REGION')
         )
-        self.model_name = 'gemini-2.5-flash' # Using flash for speed/cost.
+        self.model_name = get_model_name("flash", "gemini-3.5-flash-preview") # Using flash for speed/cost.
         # Note: 'gemini-2.5-flash' mentioned in user prompt might not be available yet publicly, 
         # sticking to a known model or the user's string if appropriate. 
         # User prompt had gemini-2.5-flash. 

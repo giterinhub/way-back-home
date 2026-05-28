@@ -1,3 +1,5 @@
+import os
+from google.adk.agents import Agent
 
 def get_model_name(model_key: str, default: str) -> str:
     import os, json
@@ -13,8 +15,6 @@ def get_model_name(model_key: str, default: str) -> str:
                 pass
     return default
 
-import os
-from google.adk.agents import Agent
 
 root_agent = Agent(
     name="formation_agent",

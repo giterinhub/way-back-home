@@ -1,3 +1,18 @@
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
 """
 Level 1: Location Analyzer MCP Server - SOLUTION
 
@@ -169,7 +184,7 @@ def analyze_geological(
     try:
         # Call Gemini with the image
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model=get_model_name("flash", "gemini-3.5-flash-preview"),
             contents=[
                 GEOLOGICAL_PROMPT,
                 genai_types.Part.from_uri(file_uri=image_url, mime_type="image/png")
@@ -267,7 +282,7 @@ def analyze_botanical(
     try:
         # Call Gemini with the video (processes both visual and audio)
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model=get_model_name("flash", "gemini-3.5-flash-preview"),
             contents=[
                 BOTANICAL_PROMPT,
                 genai_types.Part.from_uri(file_uri=video_url, mime_type="video/mp4")

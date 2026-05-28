@@ -1,3 +1,6 @@
+from google.adk.agents.llm_agent import Agent
+import os
+import redis
 
 def get_model_name(model_key: str, default: str) -> str:
     import os, json
@@ -13,9 +16,6 @@ def get_model_name(model_key: str, default: str) -> str:
                 pass
     return default
 
-from google.adk.agents.llm_agent import Agent
-import os
-import redis
 
 REDIS_IP = os.environ.get('REDIS_HOST', 'localhost')
 r = redis.Redis(host=REDIS_IP, port=6379, decode_responses=True)

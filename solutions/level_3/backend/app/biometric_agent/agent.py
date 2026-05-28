@@ -1,3 +1,18 @@
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
 import os
 from google.adk.agents import Agent
 from typing import List, Optional, Callable, Dict, Any
@@ -14,7 +29,7 @@ def report_digit(count: int):
     print(f"\n[SERVER-SIDE TOOL EXECUTION] DIGIT DETECTED: {count}\n")
     return {"status": "success", "digit": count}
 
-MODEL_ID = os.getenv("MODEL_ID", "gemini-live-2.5-flash-native-audio")
+MODEL_ID = os.getenv("MODEL_ID", get_model_name("live", "gemini-3.1-flash-live-preview"))
 
 root_agent = Agent(
     name="biometric_agent",

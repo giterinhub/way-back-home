@@ -1,3 +1,18 @@
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
 import logging
 from google.adk.agents import Agent, SequentialAgent, LlmAgent
 from agent.tools.extraction_tools import (
@@ -10,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 upload_agent = LlmAgent(
     name="UploadAgent",
-    model="gemini-2.5-flash",
+    model=get_model_name("flash", "gemini-3.5-flash-preview"),
     instruction="""Extract the file path from the user's message and upload it.
 
 Use `upload_media(file_path, survivor_id)` to upload the file.
@@ -24,7 +39,7 @@ Return the upload result with gcs_uri and media_type.""",
 
 extraction_agent = LlmAgent(
     name="ExtractionAgent", 
-    model="gemini-2.5-flash",
+    model=get_model_name("flash", "gemini-3.5-flash-preview"),
     instruction="""Extract information from the uploaded media.
 
 Previous step result: {upload_result}
@@ -39,7 +54,7 @@ Return the extraction results including entities and relationships found.""",
 
 spanner_agent = LlmAgent(
     name="SpannerAgent",
-    model="gemini-2.5-flash", 
+    model=get_model_name("flash", "gemini-3.5-flash-preview"), 
     instruction="""Save the extracted information to the database.
 
 Upload result: {upload_result}
@@ -77,7 +92,7 @@ Be concise but informative."""
 
 summary_agent = LlmAgent(
     name="SummaryAgent",
-    model="gemini-2.5-flash",
+    model=get_model_name("flash", "gemini-3.5-flash-preview"),
     instruction=summary_instruction,
     output_key="final_summary"
 )

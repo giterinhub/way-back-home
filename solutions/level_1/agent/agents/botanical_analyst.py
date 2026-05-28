@@ -1,3 +1,18 @@
+
+def get_model_name(model_key: str, default: str) -> str:
+    import os, json
+    curr = os.path.abspath(__file__)
+    for _ in range(5):
+        curr = os.path.dirname(curr)
+        cfg_path = os.path.join(curr, "workshop.config.json")
+        if os.path.exists(cfg_path):
+            try:
+                with open(cfg_path) as f:
+                    return json.load(f).get("models", {}).get(model_key, default)
+            except Exception:
+                pass
+    return default
+
 """
 Botanical Analyst Agent
 
@@ -17,7 +32,7 @@ from agent.tools.mcp_tools import get_botanical_tool
 
 botanical_analyst = Agent(
     name="BotanicalAnalyst",
-    model="gemini-2.5-flash",
+    model=get_model_name("flash", "gemini-3.5-flash-preview"),
     description="Analyzes flora recordings to classify planetary biome based on plant life and ambient sounds.",
     instruction="""You are a botanical specialist analyzing alien flora recordings.
 
