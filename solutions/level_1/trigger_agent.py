@@ -1,6 +1,10 @@
 import asyncio
 import os
 import sys
+
+# Force Vertex AI to use global location for model availability
+os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
+
 from google.adk import Runner
 from google.adk.sessions import InMemorySessionService
 from google.adk.memory import InMemoryMemoryService

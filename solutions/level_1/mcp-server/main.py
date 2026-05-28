@@ -1,6 +1,8 @@
+import os
+os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
 
 def get_model_name(model_key: str, default: str) -> str:
-    import os, json
+    import json
     curr = os.path.abspath(__file__)
     for _ in range(5):
         curr = os.path.dirname(curr)
