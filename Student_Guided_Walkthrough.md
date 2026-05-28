@@ -33,9 +33,6 @@ git checkout feature/student-walkthrough
 ### 3. Configure Google Cloud Project
 Set up your active Google Cloud project ID and verify authentication:
 ```bash
-# Authenticate with Google Cloud
-gcloud auth login
-
 # Set the active project to your Google Cloud project ID
 gcloud config set project YOUR_PROJECT_ID
 ```
@@ -178,8 +175,10 @@ graph TD
 Extract files from your pod's landing recorder and set up the local star databases:
 ```bash
 cd ../level_1
-python setup/star_catalog_sqlite.py   # Seed local SQLite star catalog
-python generate_evidence.py           # Extract geological, botanical, and star feeds
+# Seed local SQLite star catalog
+python setup/setup_star_catalog.py
+# Extract geological, botanical, and star feeds
+python generate_evidence.py   
 ```
 
 ### 2. Launch the FastMCP Server
