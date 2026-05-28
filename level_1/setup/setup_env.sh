@@ -49,6 +49,9 @@ echo "[1/6] Enabling core Google Cloud APIs..."
 gcloud services enable aiplatform.googleapis.com --project=$PROJECT_ID
 echo "      ✓ Vertex AI API enabled"
 
+gcloud services enable texttospeech.googleapis.com --project=$PROJECT_ID
+echo "      ✓ Text-to-Speech API enabled"
+
 gcloud services enable run.googleapis.com --project=$PROJECT_ID
 echo "      ✓ Cloud Run API enabled"
 

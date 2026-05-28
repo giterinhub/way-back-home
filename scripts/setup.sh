@@ -79,14 +79,14 @@ echo -e "Using project: ${CYAN}${PROJECT_ID}${NC}"
 echo ""
 echo -e "${YELLOW}Enabling required APIs...${NC}"
 
-# Enable Vertex AI API (required for Level 0)
-gcloud services enable aiplatform.googleapis.com --quiet 2>/dev/null || {
-    echo -e "${RED}Failed to enable Vertex AI API.${NC}"
+# Enable Vertex AI and Text-to-Speech APIs (required for Level 0 and Audio/Live features)
+gcloud services enable aiplatform.googleapis.com texttospeech.googleapis.com --quiet 2>/dev/null || {
+    echo -e "${RED}Failed to enable required APIs (aiplatform.googleapis.com, texttospeech.googleapis.com).${NC}"
     echo "This may be a billing or permissions issue."
     exit 1
 }
 
-echo -e "${GREEN}✓ Vertex AI API enabled${NC}"
+echo -e "${GREEN}✓ Vertex AI and Text-to-Speech APIs enabled${NC}"
 
 # =============================================================================
 # Step 4: Get event code

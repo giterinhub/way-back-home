@@ -42,6 +42,8 @@ gcloud services enable \
     storage.googleapis.com \
     cloudbuild.googleapis.com \
     artifactregistry.googleapis.com \
+    aiplatform.googleapis.com \
+    texttospeech.googleapis.com \
     --quiet
 
 echo -e "${GREEN}✓ APIs enabled${NC}"
