@@ -94,10 +94,29 @@ def main():
 
     # 1. Check if event exists
     event_ref = db.collection("events").document(event_code)
-    event_snap = event_ref.get()
-    if not event_snap.exists:
+    event_snap = event_snap_exist = False
+    try:
+        event_snap = event_ref.get()
+        event_snap_exist = event_snap.exists
+    except Exception:
+        pass
+
+    if not event_snap_exist:
         print(f"⚠️  Warning: Event document '{event_code}' not found in Firestore.")
-        create_now = input("Would you like to create this event first? (y/N): ")
+        
+        # Try to list other events to help the user identify correct event codes
+        try:
+            other_events = list(db.collection("events").stream())
+            if other_events:
+                print("Existing event codes in your database:")
+                for ev in other_events:
+                    print(f"  - {ev.id} ({ev.to_dict().get('name', 'Unnamed')})")
+            else:
+                print("No event documents exist in your Firestore database.")
+        except Exception as e:
+            print(f"  (Could not fetch existing events list: {e})")
+
+        create_now = input("\nWould you like to create the event document first? (y/N): ")
         if create_now.strip().lower() in ("y", "yes"):
             event_name = input("Enter Event Name (e.g. Build with AI): ").strip()
             if not event_name:
@@ -112,9 +131,9 @@ def main():
                 "active": True
             })
             print(f"✓ Event '{event_code}' created.")
+            event_snap_exist = True
         else:
-            print("Reset aborted.")
-            sys.exit(0)
+            print("Proceeding to search for and delete any orphaned participants and files anyway...")
 
     # 2. Delete all participants
     print("🗑️  Deleting participants...")
@@ -130,9 +149,12 @@ def main():
     print(f"✓ Deleted {deleted_count} participants from Firestore database.")
 
     # 3. Reset participant count
-    print("🔄 Resetting event participant counter to 0...")
-    event_ref.update({"participant_count": 0})
-    print("✓ Event counter reset.")
+    if event_snap_exist:
+        print("🔄 Resetting event participant counter to 0...")
+        event_ref.update({"participant_count": 0})
+        print("✓ Event counter reset.")
+    else:
+        print("⏭️  Skipping event document reset (event document does not exist).")
 
     # 4. Clear storage bucket objects
     bucket_name = f"{project_id}.firebasestorage.app"
